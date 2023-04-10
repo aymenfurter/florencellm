@@ -15,7 +15,6 @@ import (
 func main() {
 	serviceBusConnectionString := os.Getenv("AZURE_SERVICE_BUS_CONNECTION_STRING")
 	queueName := os.Getenv("QUEUE_NAME")
-	pcClient := buildPineconeClient()
 
 	mongoDBConnectionString := os.Getenv("COSMOS_DB_CONNECTION_STRING")
 	clientOptions := options.Client().ApplyURI(mongoDBConnectionString)
@@ -38,7 +37,7 @@ func main() {
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
-	handler := NewMessageHandler(repoCol, pcClient)
+	handler := NewMessageHandler(repoCol)
 	err = queue.Receive(ctx, handler)
 
 	defer cancel()

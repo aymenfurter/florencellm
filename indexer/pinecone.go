@@ -1,62 +1,48 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"crypto/x509"
+	"encoding/json"
 	"fmt"
-	"log"
+	"io/ioutil"
+	"net/http"
 	"os"
-	"time"
 
 	"github.com/pinecone-io/go-pinecone/pinecone_grpc"
 	"github.com/sashabaranov/go-openai"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/metadata"
 )
 
-func buildPineconeClient() pinecone_grpc.VectorServiceClient {
+func storeEmbeddings(commitId string, embeddings []openai.Embedding) error {
+	pineconeAPIURL := os.Getenv("PINECONE_API_URL")
 	apiKey := os.Getenv("PINECONE_API_KEY")
-	indexName := os.Getenv("PINECONE_INDEX_NAME")
-	projectName := os.Getenv("PINECONE_PROJECT_NAME")
-	pineconeEnv := os.Getenv("PINECONE_ENV")
 
-	certPool, err := x509.SystemCertPool()
-	creds := credentials.NewClientTLSFromCert(certPool, "")
+	vectors := transformToPineconeVectors(commitId, embeddings)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	ctx = metadata.AppendToOutgoingContext(ctx, "api-key", apiKey)
-	target := fmt.Sprintf("%s-%s.svc.%s.pinecone.io:443", indexName, projectName, pineconeEnv)
-	log.Printf("connecting to %v", target)
-	conn, err := grpc.DialContext(
-		ctx,
-		target,
-		grpc.WithTransportCredentials(creds),
-		grpc.WithAuthority(target),
-		grpc.WithBlock(),
-	)
+	requestBody, err := json.Marshal(map[string]interface{}{
+		"vectors": vectors,
+	})
 	if err != nil {
-		log.Fatalf("fail to dial: %v", err)
+		return fmt.Errorf("failed to marshal JSON: %w", err)
 	}
 
-	client := pinecone_grpc.NewVectorServiceClient(conn)
+	req, err := http.NewRequestWithContext(context.Background(), "POST", pineconeAPIURL, bytes.NewBuffer(requestBody))
+	if err != nil {
+		return fmt.Errorf("failed to create POST request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Api-Key", apiKey)
 
-	return client
-}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send POST request: %w", err)
+	}
+	defer resp.Body.Close()
 
-func storeEmbeddings(commitId string, embeddings []openai.Embedding, client pinecone_grpc.VectorServiceClient) error {
-	namespace := os.Getenv("PINECONE_NAMESPACE")
-
-	vector := transformToPineconeVectors(commitId, embeddings)
-
-	_, upsertErr := client.Upsert(context.Background(), &pinecone_grpc.UpsertRequest{
-		Vectors:   vector,
-		Namespace: namespace,
-	})
-	if upsertErr != nil {
-		return fmt.Errorf("failed to upsert embeddings to Pinecone: %w", upsertErr)
+	if resp.StatusCode != http.StatusOK {
+		body, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("failed to upsert embeddings to Pinecone, status code: %d, response: %s", resp.StatusCode, string(body))
 	}
 
 	return nil
@@ -65,8 +51,13 @@ func storeEmbeddings(commitId string, embeddings []openai.Embedding, client pine
 func transformToPineconeVectors(commitId string, embeddings []openai.Embedding) []*pinecone_grpc.Vector {
 	vectors := make([]*pinecone_grpc.Vector, len(embeddings))
 	for i, embedding := range embeddings {
+		embeddingsId := commitId
+		if i != 0 {
+			embeddingsId = fmt.Sprintf("%s-%d", commitId, i)
+		}
+
 		vector := &pinecone_grpc.Vector{
-			Id:     commitId,
+			Id:     embeddingsId,
 			Values: embedding.Embedding,
 		}
 		vectors[i] = vector

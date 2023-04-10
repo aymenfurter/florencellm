@@ -8,18 +8,17 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/storage/memory"
-	"github.com/pinecone-io/go-pinecone/pinecone_grpc"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func indexRepository(ctx context.Context, repoID string, repoCol *mongo.Collection, pcClient pinecone_grpc.VectorServiceClient) error {
+func indexRepository(ctx context.Context, repoID string, repoCol *mongo.Collection) error {
 	repo, err := getRepositoryByID(ctx, repoID, repoCol)
 	if err != nil {
 		return fmt.Errorf("failed to get repository: %w", err)
 	}
 
-	err = processRepository(ctx, repo, pcClient)
+	err = processRepository(ctx, repo)
 	if err != nil {
 		return fmt.Errorf("failed to process repository: %w", err)
 	}
@@ -32,13 +31,19 @@ func indexRepository(ctx context.Context, repoID string, repoCol *mongo.Collecti
 	return nil
 }
 
-func processRepository(ctx context.Context, repo Repository, pcClient pinecone_grpc.VectorServiceClient) error {
+func processRepository(ctx context.Context, repo Repository) error {
 	storer := memory.NewStorage()
+	fmt.Println("Cloning repository.. ", repo.URL)
 
 	r, err := git.Clone(storer, nil, &git.CloneOptions{
-		URL:               repo.URL,
-		RecurseSubmodules: git.DefaultSubmoduleRecursionDepth,
+		URL:           repo.URL,
+		ReferenceName: plumbing.ReferenceName("refs/heads/main"),
+		SingleBranch:  true,
+		Depth:         10,
 	})
+
+	fmt.Println("Cloning completed.. ", repo.URL)
+
 	if err != nil {
 		return fmt.Errorf("failed to clone repository: %w", err)
 	}
@@ -49,20 +54,25 @@ func processRepository(ctx context.Context, repo Repository, pcClient pinecone_g
 	}
 
 	err = refIter.ForEach(func(ref *plumbing.Reference) error {
+		if (ref.Name().Short() != "master") && (ref.Name().Short() != "main") {
+			return nil
+		}
+		fmt.Println("Processing branch: ", ref.Name().Short())
 		iter, err := r.Log(&git.LogOptions{From: ref.Hash()})
 		if err != nil {
 			return fmt.Errorf("failed to get log: %w", err)
 		}
 
 		err = iter.ForEach(func(commit *object.Commit) error {
-			err := processCommit(ctx, commit, pcClient)
+			fmt.Println("Processing commit: ", commit.Hash.String())
+			err := processCommit(ctx, commit)
 			if err != nil {
 				return fmt.Errorf("failed to process commit: %w", err)
 			}
 			return nil
 		})
 		if err != nil {
-			return fmt.Errorf("failed to iterate through commits: %w", err)
+			fmt.Println("Warning: failed to iterate through commits: ", err.Error())
 		}
 		return nil
 	})
@@ -77,13 +87,24 @@ func commitToJSON(username string, email string, diff string) string {
 }
 
 func getDiff(commit *object.Commit) string {
-	if commit.NumParents() == 0 {
+	if commit == nil || commit.NumParents() == 0 {
 		return ""
 	}
-	previousCommit, err := commit.Parent(0)
-	diff, err2 := previousCommit.Patch(commit)
 
-	if (err != nil) || (err2 != nil) {
+	previousCommit, err := commit.Parent(0)
+	if err != nil {
+		fmt.Println("Error getting parent commit:", err)
+		return ""
+	}
+
+	if previousCommit == nil {
+		fmt.Println("Error: previousCommit is nil")
+		return ""
+	}
+
+	diff, err2 := previousCommit.Patch(commit)
+	if err2 != nil {
+		fmt.Println("Error getting diff:", err2)
 		return ""
 	}
 
@@ -91,23 +112,19 @@ func getDiff(commit *object.Commit) string {
 	return diffString
 }
 
-func processCommit(ctx context.Context, commit *object.Commit, pcClient pinecone_grpc.VectorServiceClient) error {
+func processCommit(ctx context.Context, commit *object.Commit) error {
 	author := commit.Author
 	email := author.Email
 	diffString := getDiff(commit)
 	commitId := commit.Hash.String()
-	embeddings, err := generateEmbeddings(author, email, diffString)
+	commitMsg := commit.Message
+	embeddings, err := generateEmbeddings(commitMsg, author, email, diffString)
 
 	if err != nil {
 		return fmt.Errorf("failed to generate embeddings: %w", err)
 	}
 
-	fmt.Println(embeddings)
-	if pcClient == nil {
-		return nil
-	}
-
-	err = storeEmbeddings(commitId, embeddings, pcClient)
+	err = storeEmbeddings(commitId, embeddings)
 	if err != nil {
 		return fmt.Errorf("failed to store embeddings in Pinecone: %w", err)
 	}

@@ -15,17 +15,16 @@ type MessageHandler struct {
 	pcClient pinecone_grpc.VectorServiceClient
 }
 
-func NewMessageHandler(repoCol *mongo.Collection, pcClient pinecone_grpc.VectorServiceClient) *MessageHandler {
+func NewMessageHandler(repoCol *mongo.Collection) *MessageHandler {
 	return &MessageHandler{
-		repoCol:  repoCol,
-		pcClient: pcClient,
+		repoCol: repoCol,
 	}
 }
 
 func (h *MessageHandler) Handle(ctx context.Context, msg *servicebus.Message) error {
 	repoID := string(msg.Data)
 
-	err := indexRepository(ctx, repoID, h.repoCol, h.pcClient)
+	err := indexRepository(ctx, repoID, h.repoCol)
 	if err != nil {
 		fmt.Println("Error indexing repository:", err)
 	} else {

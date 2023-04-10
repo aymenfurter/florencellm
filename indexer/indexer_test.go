@@ -11,12 +11,11 @@ import (
 func TestProcessRepository(t *testing.T) {
 	ctx := context.Background()
 
-	// Define a sample repository
 	repo := Repository{
-		URL: "https://github.com/aymenfurter/todo.js.git",
+		URL: "https://github.com/MicrosoftDocs/architecture-center.git",
 	}
 
-	err := processRepository(ctx, repo, buildPineconeClient())
+	err := processRepository(ctx, repo)
 	require.NoError(t, err)
 }
 
