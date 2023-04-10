@@ -13,14 +13,15 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-func storeEmbeddings(commitId string, embeddings []openai.Embedding) error {
+func storeEmbeddings(commitId string, embeddings []*pinecone_grpc.Vector) error {
 	pineconeAPIURL := os.Getenv("PINECONE_API_URL")
+	pineconeAPIURL = fmt.Sprintf("%s/vectors/upsert", pineconeAPIURL)
 	apiKey := os.Getenv("PINECONE_API_KEY")
 
-	vectors := transformToPineconeVectors(commitId, embeddings)
+	//vectors := transformToPineconeVectors(commitId, embeddings)
 
 	requestBody, err := json.Marshal(map[string]interface{}{
-		"vectors": vectors,
+		"vectors": embeddings,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to marshal JSON: %w", err)

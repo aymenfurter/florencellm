@@ -118,7 +118,7 @@ func processCommit(ctx context.Context, commit *object.Commit) error {
 	diffString := getDiff(commit)
 	commitId := commit.Hash.String()
 	commitMsg := commit.Message
-	embeddings, err := generateEmbeddings(commitMsg, author, email, diffString)
+	embeddings, err := generateEmbeddings(commitMsg, author, email, diffString, commitId)
 
 	if err != nil {
 		return fmt.Errorf("failed to generate embeddings: %w", err)
