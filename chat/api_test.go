@@ -16,7 +16,7 @@ func TestAPI(t *testing.T) {
 
 	// Test initial mode
 	t.Run("Initial mode", func(t *testing.T) {
-		input := `{"userMessage": "What is AI?"}`
+		input := `{"userMessage": "Who can help me with Azure Function?"}`
 		request := httptest.NewRequest(http.MethodPost, "/conversation", strings.NewReader(input))
 		response := httptest.NewRecorder()
 
@@ -48,6 +48,6 @@ func TestAPI(t *testing.T) {
 
 		assert.Contains(t, responseBody, "response")
 		assert.Contains(t, responseBody, "messages")
-		assert.Len(t, responseBody["messages"].([]interface{}), 4)
+		assert.Len(t, responseBody["messages"].([]interface{}), 5)
 	})
 }
