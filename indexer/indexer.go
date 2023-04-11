@@ -39,7 +39,7 @@ func processRepository(ctx context.Context, repo Repository) error {
 		URL:           repo.URL,
 		ReferenceName: plumbing.ReferenceName("refs/heads/main"),
 		SingleBranch:  true,
-		Depth:         10,
+		Depth:         100000,
 	})
 
 	fmt.Println("Cloning completed.. ", repo.URL)

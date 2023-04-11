@@ -31,7 +31,7 @@ func newOpenAIClient() *openai.Client {
 
 func generateSingleEmbedding(client *openai.Client, commitMsg string, author object.Signature, email, diffString string, commitId string) ([]*pinecone_grpc.Vector, error) {
 	embeddings := make([]*pinecone_grpc.Vector, 0)
-	input := fmt.Sprintf("Author: %s\nCommit-Message:\n%s\nEmail: %s\nDiff: %s", author.Name, commitMsg, email, diffString)
+	input := fmt.Sprintf("Author: %s\nCommit-Message:\n%s\nEmail: %s\nCommitId: \n%s\nDiff: %s", author.Name, commitMsg, email, commitId, diffString)
 	metadata := &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"text": &structpb.Value{
@@ -69,7 +69,7 @@ func generateChunkedEmbeddings(client *openai.Client, commitMsg string, author o
 
 	for i, chunk := range chunks {
 		if i <= chunkCutoffThreshold {
-			input := fmt.Sprintf("Author: %s\nCommit-Message:%s\nEmail: %s\nChunk:\n%d\nDiff: %s", author.Name, commitMsg, email, i, chunk)
+			input := fmt.Sprintf("Author: %s\nCommit-Message:%s\nEmail: %s\nChunk:\n%d\nCommitId: \n%s\nDiff: %s", author.Name, commitMsg, email, i, commitId, chunk)
 			embeddingReq := createEmbeddingRequest(input)
 
 			response, err := requestEmbeddings(client, embeddingReq)
