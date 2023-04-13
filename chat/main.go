@@ -4,9 +4,16 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/sashabaranov/go-openai"
 )
+
+// add main method
+func main() {
+	router := SetupRouter()
+	router.Run()
+}
 
 // SetupRouter configures the router for API endpoints
 func SetupRouter() *gin.Engine {
@@ -15,6 +22,17 @@ func SetupRouter() *gin.Engine {
 	// Initialize OpenAIClient and PineconeClient
 	openaiClient := NewOpenAIClient(os.Getenv("OPEN_AI_KEY"))
 	pineconeClient := NewPineconeClient(os.Getenv("PINECONE_API_URL"), os.Getenv("PINECONE_API_KEY"))
+
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		AllowOriginFunc: func(origin string) bool {
+			return true
+		},
+	}))
 
 	router.POST("/conversation", func(c *gin.Context) {
 		var requestBody ConversationRequest

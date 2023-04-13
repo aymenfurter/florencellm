@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Q&A Chatbot</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css"
+    crossorigin="anonymous" />
+  </head> 
+  <body>
+    <header>
+      <div class="dark-mode-toggle">
+        <input type="checkbox" id="dark-mode-switch" class="toggle-input" />
+        <label for="dark-mode-switch" class="toggle-label">
+          <i class="fas fa-moon"></i>
+          <i class="fas fa-sun"></i>
+        </label>
+      </div>
+    </header>
+    <div class="container">
+      <h1>Chatbot</h1>
+      <div class="chat-area" id="chat-area"></div>
+      <div class="input-area">
+        <!-- Chat messages will be displayed here -->
+      <form id="chat-form">
+        <input type="text" id="user-input" placeholder="Type your question here..." />
+        <button id="start-scratch" title="Start from scratch">
+          <i class="fas fa-broom"></i>
+        </button>
+        <button type="submit">
+          <span id="send"style="display: block">Send</span> 
+          <span id="typing-indicator" class="message" style="display: none;">
+            <span class="typing-dots">
+              <span>.</span>
+              <span>.</span>
+              <span>.</span>
+            </span>
+          </span>
+        </button>
+      </form>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
+
