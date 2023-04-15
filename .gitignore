@@ -16,6 +16,7 @@
 
 # Angular
 node_modules/
+.angular/
 /dist/
 /env/
 *.js.map
