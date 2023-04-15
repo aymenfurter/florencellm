@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-git/go-git/v5/storage/memory"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/sync/semaphore"
 )
 
 func indexRepository(ctx context.Context, repoID string, repoCol *mongo.Collection) error {
@@ -53,6 +55,9 @@ func processRepository(ctx context.Context, repo Repository) error {
 		return fmt.Errorf("failed to get branches: %w", err)
 	}
 
+	var wg sync.WaitGroup
+	sem := semaphore.NewWeighted(10)
+
 	err = refIter.ForEach(func(ref *plumbing.Reference) error {
 		if (ref.Name().Short() != "master") && (ref.Name().Short() != "main") {
 			return nil
@@ -64,11 +69,22 @@ func processRepository(ctx context.Context, repo Repository) error {
 		}
 
 		err = iter.ForEach(func(commit *object.Commit) error {
-			fmt.Println("Processing commit: ", commit.Hash.String())
-			err := processCommit(ctx, commit)
-			if err != nil {
-				return fmt.Errorf("failed to process commit: %w", err)
+			if err := sem.Acquire(ctx, 1); err != nil {
+				return fmt.Errorf("failed to acquire semaphore: %w", err)
 			}
+
+			wg.Add(1)
+			go func() {
+				defer sem.Release(1)
+				defer wg.Done()
+
+				fmt.Println("Processing commit: ", commit.Hash.String())
+				err := processCommit(ctx, commit, repo.URL)
+				if err != nil {
+					fmt.Println("Warning: failed to process commit: ", err.Error())
+				}
+			}()
+
 			return nil
 		})
 		if err != nil {
@@ -79,6 +95,8 @@ func processRepository(ctx context.Context, repo Repository) error {
 	if err != nil {
 		return fmt.Errorf("failed to iterate through branches: %w", err)
 	}
+
+	wg.Wait()
 	return nil
 }
 
@@ -112,13 +130,13 @@ func getDiff(commit *object.Commit) string {
 	return diffString
 }
 
-func processCommit(ctx context.Context, commit *object.Commit) error {
+func processCommit(ctx context.Context, commit *object.Commit, repoUrl string) error {
 	author := commit.Author
 	email := author.Email
 	diffString := getDiff(commit)
 	commitId := commit.Hash.String()
 	commitMsg := commit.Message
-	embeddings, err := generateEmbeddings(commitMsg, author, email, diffString, commitId)
+	embeddings, err := generateEmbeddings(commitMsg, author, email, diffString, commitId, repoUrl)
 
 	if err != nil {
 		return fmt.Errorf("failed to generate embeddings: %w", err)

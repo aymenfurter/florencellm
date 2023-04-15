@@ -1,0 +1,10 @@
+.chat-messages {
+    height: 400px;
+    overflow-y: scroll;
+    padding: 8px;
+}
+  
+.chat-input {
+    display: flex;
+    gap: 8px;
+}

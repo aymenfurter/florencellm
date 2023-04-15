@@ -5,7 +5,6 @@ let messages = [];
 
 const API_URL = "http://localhost:8080/conversation";
 
-// Event listener for chat form submission
 chatForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -16,25 +15,12 @@ chatForm.addEventListener("submit", async (e) => {
     return;
   }
 
-  // Display user message in the chat area
   displayMessage("User", userMessage);
-
-  // Show typing indicator
   showTypingIndicator(true);
-
-  // Send message to the API
   const response = await sendMessage(userMessage, messages);
-
-  // Hide typing indicator
   showTypingIndicator(false);
-
-  // Update messages array with user and assistant messages
   messages = response.messages;
-
-  // Display assistant message in the chat area
   displayMessage("Assistant", response.response);
-
-  // Clear input field
   userInput.value = "";
 });
 
@@ -75,29 +61,3 @@ async function sendMessage(userMessage, messages) {
     console.error(`Error while sending message: ${error.message}`);
   }
 }
-
-const darkModeSwitch = document.getElementById("dark-mode-switch");
-
-darkModeSwitch.addEventListener("change", () => {
-  const html = document.documentElement;
-  if (darkModeSwitch.checked) {
-    html.setAttribute("data-theme", "dark");
-    localStorage.setItem("theme", "dark");
-  } else {
-    html.removeAttribute("data-theme");
-    localStorage.removeItem("theme");
-  }
-});
-
-const storedTheme = localStorage.getItem("theme");
-if (storedTheme) {
-  document.documentElement.setAttribute("data-theme", storedTheme);
-  darkModeSwitch.checked = storedTheme === "dark";
-}
-
-const startScratchButton = document.getElementById("start-scratch");
-const userInput = document.getElementById("user-input");
-
-startScratchButton.addEventListener("click", () => {
-  location.href = location.href;
-});

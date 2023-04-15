@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
 
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/pinecone-io/go-pinecone/pinecone_grpc"
@@ -13,25 +12,25 @@ import (
 )
 
 const maxDiffStringLength = 8000
-const chunkCutoffThreshold = 1
+const chunkCutoffThreshold = 3
 
-func generateEmbeddings(commitMsg string, author object.Signature, email, diffString string, commitId string) ([]*pinecone_grpc.Vector, error) {
+func generateEmbeddings(commitMsg string, author object.Signature, email, diffString string, commitId string, repoURL string) ([]*pinecone_grpc.Vector, error) {
 	client := newOpenAIClient()
 
 	if len(diffString) < maxDiffStringLength {
-		return generateSingleEmbedding(client, commitMsg, author, email, diffString, commitId)
+		return generateSingleEmbedding(client, commitMsg, author, email, diffString, commitId, repoURL)
 	}
 
-	return generateChunkedEmbeddings(client, commitMsg, author, email, diffString, commitId)
+	return generateChunkedEmbeddings(client, commitMsg, author, email, diffString, commitId, repoURL)
 }
 
 func newOpenAIClient() *openai.Client {
 	return openai.NewClient(os.Getenv("OPEN_AI_KEY"))
 }
 
-func generateSingleEmbedding(client *openai.Client, commitMsg string, author object.Signature, email, diffString string, commitId string) ([]*pinecone_grpc.Vector, error) {
+func generateSingleEmbedding(client *openai.Client, commitMsg string, author object.Signature, email, diffString string, commitId string, repoURL string) ([]*pinecone_grpc.Vector, error) {
 	embeddings := make([]*pinecone_grpc.Vector, 0)
-	input := fmt.Sprintf("Author: %s\nCommit-Message:\n%s\nEmail: %s\nCommitId: \n%s\nDiff: %s", author.Name, commitMsg, email, commitId, diffString)
+	input := fmt.Sprintf("Author: %s\nRepoURL:\n%s\nCommit-Message:\n%s\nEmail: %s\nCommitId: \n%s\nDiff: %s", author.Name, repoURL, commitMsg, email, commitId, diffString)
 	metadata := &structpb.Struct{
 		Fields: map[string]*structpb.Value{
 			"text": &structpb.Value{
@@ -63,13 +62,13 @@ func generateSingleEmbedding(client *openai.Client, commitMsg string, author obj
 	return embeddings, nil
 }
 
-func generateChunkedEmbeddings(client *openai.Client, commitMsg string, author object.Signature, email, diffString string, commitId string) ([]*pinecone_grpc.Vector, error) {
+func generateChunkedEmbeddings(client *openai.Client, commitMsg string, author object.Signature, email, diffString string, commitId string, repoURL string) ([]*pinecone_grpc.Vector, error) {
 	chunks := chunkString(diffString, maxDiffStringLength)
 	embeddings := make([]*pinecone_grpc.Vector, 0)
 
 	for i, chunk := range chunks {
 		if i <= chunkCutoffThreshold {
-			input := fmt.Sprintf("Author: %s\nCommit-Message:%s\nEmail: %s\nChunk:\n%d\nCommitId: \n%s\nDiff: %s", author.Name, commitMsg, email, i, commitId, chunk)
+			input := fmt.Sprintf("Author: %s\nRepo-URL:\n%s\nCommit-Message:%s\nEmail: %s\nChunk:\n%d\nCommitId: \n%s\nDiff: %s", author.Name, repoURL, commitMsg, email, i, commitId, chunk)
 			embeddingReq := createEmbeddingRequest(input)
 
 			response, err := requestEmbeddings(client, embeddingReq)
@@ -118,7 +117,7 @@ func requestEmbeddings(client *openai.Client, embeddingReq openai.EmbeddingReque
 		return nil, fmt.Errorf("failed to generate embeddings from OpenAI: %w", err)
 	}
 
-	time.Sleep(1 * time.Second) // Avoid rate limit
+	//time.Sleep(1 * time.Second) // rate limit
 	return &response, nil
 }
 

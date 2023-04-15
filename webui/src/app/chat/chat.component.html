@@ -1,0 +1,17 @@
+<mat-card>
+    <mat-card-title>Chat</mat-card-title>
+    <mat-card-content>
+      <mat-list>
+        <mat-list-item *ngFor="let message of messages">
+          <h4 matLine>{{ message.role }}: {{ message.content }}</h4>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+    <mat-card-actions>
+      <mat-form-field>
+        <input matInput [(ngModel)]="userMessage" placeholder="Type a message...">
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="submitMessage()">Send</button>
+    </mat-card-actions>
+  </mat-card>
+  

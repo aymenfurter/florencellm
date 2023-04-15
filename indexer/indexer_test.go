@@ -12,7 +12,8 @@ func TestProcessRepository(t *testing.T) {
 	ctx := context.Background()
 
 	repo := Repository{
-		URL: "https://github.com/MicrosoftDocs/architecture-center.git",
+		//URL: "https://github.com/MicrosoftDocs/architecture-center.git",
+		URL: "https://github.com/MicrosoftDocs/azure-docs.git",
 	}
 
 	err := processRepository(ctx, repo)

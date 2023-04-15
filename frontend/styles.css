@@ -50,6 +50,11 @@ h1 {
   margin-left: 10px;
 }
 
+#chat-form .broom {
+  background-color: #ccc;
+  color: #333;
+}
+
 #chat-form button:hover {
   background-color: #0056b3;
 }

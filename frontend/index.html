@@ -27,10 +27,7 @@
       <div class="input-area">
         <!-- Chat messages will be displayed here -->
       <form id="chat-form">
-        <input type="text" id="user-input" placeholder="Type your question here..." />
-        <button id="start-scratch" title="Start from scratch">
-          <i class="fas fa-broom"></i>
-        </button>
+        <input type="text" id="user-input" placeholder="What do you need help with?" />
         <button type="submit">
           <span id="send"style="display: block">Send</span> 
           <span id="typing-indicator" class="message" style="display: none;">
@@ -41,9 +38,13 @@
             </span>
           </span>
         </button>
+        <button id="start-scratch" title="Start from scratch" class="broom">
+          <i class="fas fa-broom"></i>
+        </button>
       </form>
     </div>
     <script src="app.js"></script>
+    <script src="darkmode.js"></script>
   </body>
 </html>
 

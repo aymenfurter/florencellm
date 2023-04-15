@@ -1,0 +1,38 @@
+# .gitignore
+
+# General
+.DS_Store
+*.log
+*.swp
+*.bak
+*.tmp
+
+# Go
+*.exe
+*.test
+*.out
+/vendor/
+/bin/
+
+# Angular
+node_modules/
+/dist/
+/env/
+*.js.map
+.tmp/
+
+# Editor-specific
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.tm_properties
+*.tmtags
+
+# Compiled Output
+*.o
+*.so
+*.a
+*.lib
+*.dll
+
