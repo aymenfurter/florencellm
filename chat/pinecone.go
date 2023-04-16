@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 )
 
 type PineconeClient struct {
@@ -26,7 +27,7 @@ func (client *PineconeClient) QueryPinecone(query []float32) (string, error) {
 
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"vector":          query,
-		"top_k":           10,
+		"top_k":           15,
 		"includeMetadata": true,
 	})
 	if err != nil {
@@ -62,21 +63,73 @@ func (client *PineconeClient) QueryPinecone(query []float32) (string, error) {
 
 	matches := result["matches"].([]interface{})
 	matchOutput := ""
+	authorRE := regexp.MustCompile(`Author:\s(.+)`)
+
+	// TODO - Index all blocked users and expose this as a config
+	blockedUsers := []string{
+		"huypub",
+		"prmerger-automator",
+	}
 
 	for i, match := range matches {
 		match := match.(map[string]interface{})
 		metadata := match["metadata"].(map[string]interface{})
 		text := metadata["text"].(string)
+
+		validUser := true
+		author := authorRE.FindStringSubmatch(text)[1]
+		if author != "" {
+			for _, blockedUser := range blockedUsers {
+				if author == blockedUser {
+					fmt.Printf("Blocked user: %s", author)
+					validUser = false
+				}
+			}
+		}
+
+		fmt.Printf("Allowed user: %s", author)
+
+		//if author != "" {
+		//	url := "https://github.com/" + author
+
+		//	resp, err := http.Get(url)
+		//	if err != nil {
+		//		log.Fatalf("Error making request: %v", err)
+		//	}
+		//	defer resp.Body.Close()
+
+		//	if resp.StatusCode == http.StatusOK {
+		//		doc, err := goquery.NewDocumentFromReader(resp.Body)
+		//		if err != nil {
+		//			log.Fatalf("Error parsing HTML: %v", err)
+		//		}
+
+		//		userProfileBio := doc.Find(".user-profile-bio").Text()
+		//		for _, word := range blocklist {
+		//			if strings.Contains(userProfileBio, word) {
+		//				fmt.Println("Blocked" + author)
+		//				continue
+		//			}
+		//		}
+		//	} else {
+		//		fmt.Println("Not checked " + author)
+		//	}
+
+		//}
+
 		output := fmt.Sprintf("\n\n# %d. %s\n", i+1, text)
 		if len(output) > 500 {
 			output = output[:500]
 		}
 
-		matchOutput += output + "\n\n"
+		if validUser {
+			matchOutput += output + "\n\n"
+		}
 
-		if len(matchOutput) > 2500 {
+		if len(matchOutput) > 4500 {
 			break
 		}
+
 	}
 
 	return matchOutput, nil

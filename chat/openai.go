@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -24,7 +23,7 @@ func (client *OpenAIClient) RequestEmbeddings(embeddingReq openai.EmbeddingReque
 		return nil, fmt.Errorf("failed to generate embeddings from OpenAI: %w", err)
 	}
 
-	time.Sleep(1 * time.Second) // Avoid rate limit
+	//time.Sleep(1 * time.Second) // Avoid rate limit
 	return &response, nil
 }
 

@@ -2,7 +2,7 @@
     <mat-sidenav-content class="content">
         <div *ngIf="!messages.length" class="welcome-container">
             <h2>Welcome!</h2>
-            <p>Try one of these sample queries:</p>
+            <p>Type a message below or try one of these sample queries:</p>
             <ul class="sample-queries">
                 <li (click)="startConversation(sampleQuery)" *ngFor="let sampleQuery of sampleQueries">
                 {{ sampleQuery }}
@@ -18,7 +18,7 @@
               'assistant-message': message.role === 'assistant'
             }"
           >
-            <h4>{{ message.role }}: {{ message.content }}</h4>
+            <h4 [ngStyle]="{'white-space': 'pre-wrap'}">{{ message.content }}</h4>
           </div>
         </ng-container>
       </div>

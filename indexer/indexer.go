@@ -26,7 +26,7 @@ func indexRepository(ctx context.Context, repoID string, repoCol *mongo.Collecti
 		return fmt.Errorf("failed to get repository: %w", err)
 	}
 
-	err = processRepository(ctx, repo)
+	err = processRepository(ctx, repo, "")
 	if err != nil {
 		return fmt.Errorf("failed to process repository: %w", err)
 	}
@@ -61,7 +61,7 @@ func getNextCommit(iter object.CommitIter) (*object.Commit, error) {
 	return commit, nil
 }
 
-func processRepository(ctx context.Context, repo Repository) error {
+func processRepository(ctx context.Context, repo Repository, lastCommit string) error {
 	//storer := memory.NewStorage()
 
 	if repo.URL == "" {
@@ -125,28 +125,40 @@ func processRepository(ctx context.Context, repo Repository) error {
 		}
 
 		commitRemaining := true
+		reachedCheckpoint := false
+
+		if lastCommit == "" {
+			reachedCheckpoint = true
+		}
+
 		for commitRemaining {
 			commit, err := getNextCommit(iter)
-			if err != nil || ref == nil {
-				commitRemaining = false
-				break
-			}
 
-			if err := sem.Acquire(ctx, 1); err != nil {
-				return fmt.Errorf("failed to acquire semaphore: %w", err)
-			}
-
-			wg.Add(1)
-			go func() {
-				defer sem.Release(1)
-				defer wg.Done()
-
-				fmt.Println("Processing commit: ", commit.Hash.String())
-				err := processCommit(ctx, commit, repo.URL)
-				if err != nil {
-					fmt.Println("Warning: failed to process commit: ", err.Error())
+			if reachedCheckpoint == false && commit.Hash.String() != lastCommit {
+				fmt.Println("Skipping commit: ", commit.Hash.String())
+			} else {
+				reachedCheckpoint = true
+				if err != nil || ref == nil {
+					commitRemaining = false
+					break
 				}
-			}()
+
+				if err := sem.Acquire(ctx, 1); err != nil {
+					return fmt.Errorf("failed to acquire semaphore: %w", err)
+				}
+
+				wg.Add(1)
+				go func() {
+					defer sem.Release(1)
+					defer wg.Done()
+
+					fmt.Println("Processing commit: ", commit.Hash.String())
+					err := processCommit(ctx, commit, repo.URL)
+					if err != nil {
+						fmt.Println("Warning: failed to process commit: ", err.Error())
+					}
+				}()
+			}
 		}
 		if err != nil {
 			fmt.Println("Warning: failed to iterate through commits: ", err.Error())

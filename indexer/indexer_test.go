@@ -9,7 +9,7 @@ import (
 )
 
 func TestProcessRepository(t *testing.T) {
-	// until fbb187adaab6f039e1306d2ea4dbd25d51fda019
+	// until bd674acdbc7907ca30352081bc7137511b2e79c7
 	ctx := context.Background()
 
 	repo := Repository{
@@ -17,7 +17,7 @@ func TestProcessRepository(t *testing.T) {
 		URL: "https://github.com/MicrosoftDocs/azure-docs.git",
 	}
 
-	err := processRepository(ctx, repo)
+	err := processRepository(ctx, repo, "bd674acdbc7907ca30352081bc7137511b2e79c7")
 	require.NoError(t, err)
 }
 
