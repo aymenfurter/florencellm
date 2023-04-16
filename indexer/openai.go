@@ -12,7 +12,7 @@ import (
 )
 
 const maxDiffStringLength = 8000
-const chunkCutoffThreshold = 3
+const chunkCutoffThreshold = 1
 
 func generateEmbeddings(commitMsg string, author object.Signature, email, diffString string, commitId string, repoURL string) ([]*pinecone_grpc.Vector, error) {
 	client := newOpenAIClient()

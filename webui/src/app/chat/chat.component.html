@@ -1,17 +1,53 @@
-<mat-card>
-    <mat-card-title>Chat</mat-card-title>
-    <mat-card-content>
-      <mat-list>
-        <mat-list-item *ngFor="let message of messages">
-          <h4 matLine>{{ message.role }}: {{ message.content }}</h4>
-        </mat-list-item>
-      </mat-list>
-    </mat-card-content>
-    <mat-card-actions>
-      <mat-form-field>
-        <input matInput [(ngModel)]="userMessage" placeholder="Type a message...">
-      </mat-form-field>
-      <button mat-raised-button color="primary" (click)="submitMessage()">Send</button>
-    </mat-card-actions>
-  </mat-card>
+<mat-sidenav-container class="sidenav-container">
+    <mat-sidenav-content class="content">
+        <div *ngIf="!messages.length" class="welcome-container">
+            <h2>Welcome!</h2>
+            <p>Try one of these sample queries:</p>
+            <ul class="sample-queries">
+                <li (click)="startConversation(sampleQuery)" *ngFor="let sampleQuery of sampleQueries">
+                {{ sampleQuery }}
+                </li>
+            </ul>
+      </div>
+      <div class="message-container">
+        <ng-container *ngFor="let message of messages">
+          <div
+            class="message"
+            [ngClass]="{
+              'user-message': message.role === 'user',
+              'assistant-message': message.role === 'assistant'
+            }"
+          >
+            <h4>{{ message.role }}: {{ message.content }}</h4>
+          </div>
+        </ng-container>
+      </div>
+    </mat-sidenav-content>
+    <mat-toolbar class="chatbar" color="background">
+            
+        <form (ngSubmit)="submitMessage()" #messageForm="ngForm">
+            <mat-form-field appearance="fill" class="input-form">
+              <input
+                autofocus
+                class="text-box"
+                matInput
+                [(ngModel)]="userMessage"
+                placeholder="Type a message..."
+                name="userMessage"
+                required
+              />
+            </mat-form-field>
+            <button
+              mat-raised-button
+              color="primary"
+              class="send-button"
+              type="submit"
+              [disabled]="isLoading"
+            >
+              <mat-spinner *ngIf="isLoading" diameter="24"></mat-spinner>
+              <span *ngIf="!isLoading">Send</span>
+            </button>
+          </form>
+    </mat-toolbar>
+  </mat-sidenav-container>
   

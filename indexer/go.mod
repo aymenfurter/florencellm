@@ -3,10 +3,15 @@ module indexer
 go 1.19
 
 require (
+	github.com/go-git/go-git v4.7.0+incompatible // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.7.2 // indirect
+	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/src-d/gcfg v1.4.0 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/tools v0.8.0 // indirect
 	google.golang.org/genproto v0.0.0-20211208223120-3a66f561d7aa // indirect
+	gopkg.in/src-d/go-billy.v4 v4.3.2 // indirect
+	gopkg.in/src-d/go-git.v4 v4.13.1 // indirect
 )
 
 require (
