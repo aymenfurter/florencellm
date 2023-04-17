@@ -18,7 +18,7 @@ func TestProcessRepository(t *testing.T) {
 		//URL: "https://github.com/MicrosoftDocs/azure-docs-cli.git",
 	}
 
-	err := processRepository(ctx, repo, "2cdb12485f409f48c453b69e3dc3ec5f649fcc8a")
+	err := processRepository(ctx, repo, "e531c61632f0d4382c7d53213b7a8dfc36351cf9")
 	//err := processRepository(ctx, repo, "")
 	require.NoError(t, err)
 }

@@ -101,12 +101,12 @@ func processRepository(ctx context.Context, repo Repository, lastCommit string) 
 	var err error
 
 	// check if repo is already checked out
-	//if _, err := os.Stat(tempDir() + "/" + folderName); os.IsNotExist(err) {
-	//	err = gitClone(repo.URL, folderName, "main", 20000)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
+	if _, err := os.Stat(tempDir() + "/" + folderName); os.IsNotExist(err) {
+		err = gitClone(repo.URL, folderName, "main", 20000)
+		if err != nil {
+			return err
+		}
+	}
 
 	r, err = git.PlainOpen(tempDir() + "/" + folderName)
 
