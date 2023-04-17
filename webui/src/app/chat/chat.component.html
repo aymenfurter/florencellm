@@ -1,8 +1,9 @@
 <mat-sidenav-container class="sidenav-container">
     <mat-sidenav-content class="content">
         <div *ngIf="!messages.length" class="welcome-container">
-            <h2>Welcome!</h2>
-            <p>Type a message below or try one of these sample queries:</p>
+            <img src="assets/logo.png" class="logo" />
+            <h2>Hey there! 👋</h2>
+            <p>I'm not your typical chatbot. I'm here to help you connect with the right person in your organization. <br>Sorry, though, I'm not so great with coding or shopping lists! 😅 <br>Type a message below or try one of these sample queries:<br></p>
             <ul class="sample-queries">
                 <li (click)="startConversation(sampleQuery)" *ngFor="let sampleQuery of sampleQueries">
                 {{ sampleQuery }}
@@ -18,7 +19,8 @@
               'assistant-message': message.role === 'assistant'
             }"
           >
-            <h4 [ngStyle]="{'white-space': 'pre-wrap'}">{{ message.content }}</h4>
+            <img *ngIf="message.role === 'assistant'" src="assets/logo.png" class="assistant-logo" />
+            <h4 [ngStyle]="{'white-space': 'pre-wrap'}" [innerHTML]="message.content | linkify"></h4>
           </div>
         </ng-container>
       </div>
@@ -48,6 +50,8 @@
               <span *ngIf="!isLoading">Send</span>
             </button>
           </form>
+         <div class="footprint">This is a demo of 'Florence' - a GPT-based search engine (using only publicly available data on GitHub).</div>
+
     </mat-toolbar>
   </mat-sidenav-container>
   

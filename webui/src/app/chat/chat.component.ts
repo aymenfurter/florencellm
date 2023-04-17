@@ -15,7 +15,7 @@ export class ChatComponent {
     "I am looking for someone that knows the Azure CNI Overlay within Azure Kubernetes service",
     "Who is the right person to talk to when I am interested regarding Azure Container Service workload profiles?",
     "I need help with the Capture cost requirements on Azure. Who is the expert on this?",
-    "Who can help me to learn more about Azure Container Instances with VNET integration"
+    "Who can help me to learn more about Azure Container Instances with VNET integration?"
   ];
 
   constructor(private chatService: ChatService) {}

@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/cache"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 
-	"github.com/go-git/go-git/v5/storage/filesystem"
 	//"github.com/go-git/go-git/v5/storage/memory"
-	"github.com/go-git/go-billy/v5/osfs"
+
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/sync/semaphore"
@@ -61,42 +61,54 @@ func getNextCommit(iter object.CommitIter) (*object.Commit, error) {
 	}
 	return commit, nil
 }
+func gitClone(repoURL, folderName, referenceName string, depth int) error {
+	tmpDir := filepath.Join(tempDir(), folderName)
+	err := os.MkdirAll(tmpDir, 0755)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command("git", "clone", "--branch", referenceName, "--single-branch", "--depth", fmt.Sprint(depth), repoURL, tmpDir)
+
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println(string(output))
+		return err
+	}
+
+	return nil
+}
+
+func tempDir() string {
+	tmpFolder := os.Getenv("TEMP_FOLDER")
+	if tmpFolder == "" {
+		tmpFolder = os.TempDir()
+	}
+	return tmpFolder
+}
 
 func processRepository(ctx context.Context, repo Repository, lastCommit string) error {
-	//storer := memory.NewStorage()
-
 	if repo.URL == "" {
 		return fmt.Errorf("repository URL is empty")
 	}
 
 	folderName := repo.URL[strings.LastIndex(repo.URL, "/")+1:]
-	// check if FolderName exists
-	folderExists := false
-	if _, err := os.Stat("/tmp/" + folderName); err == nil {
-		folderExists = true
-	}
-
-	storer := filesystem.NewStorage(
-		osfs.New("/tmp/"+folderName+"/"),
-		cache.NewObjectLRUDefault())
+	folderName = folderName[:len(folderName)-4]
 
 	fmt.Println("Cloning repository.. ", repo.URL)
 
 	r := &git.Repository{}
+	var err error
 
-	_, err := storer.Reference(plumbing.ReferenceName("refs/heads/main"))
-	if folderExists {
-		fmt.Println("Repository already exists.. ", repo.URL)
-		r, err = git.Open(storer, osfs.New("/tmp/"+folderName+"/"))
-	} else {
-		fmt.Println("Repository does not exist.. ", repo.URL)
-		r, err = git.Clone(storer, osfs.New("/tmp/"+folderName+"/"), &git.CloneOptions{
-			URL:           repo.URL,
-			ReferenceName: plumbing.ReferenceName("refs/heads/main"),
-			SingleBranch:  true,
-			Depth:         20000,
-		})
-	}
+	// check if repo is already checked out
+	//if _, err := os.Stat(tempDir() + "/" + folderName); os.IsNotExist(err) {
+	//	err = gitClone(repo.URL, folderName, "main", 20000)
+	//	if err != nil {
+	//		return err
+	//	}
+	//}
+
+	r, err = git.PlainOpen(tempDir() + "/" + folderName)
 
 	fmt.Println("Cloning completed.. ", repo.URL)
 	if err != nil {
@@ -140,7 +152,7 @@ func processRepository(ctx context.Context, repo Repository, lastCommit string) 
 		for commitRemaining {
 			commit, err := getNextCommit(iter)
 
-			if reachedCheckpoint == false && commit.Hash.String() != lastCommit {
+			if reachedCheckpoint == false && commit != nil && commit.Hash.String() != lastCommit {
 				fmt.Println("Skipping commit: ", commit.Hash.String())
 			} else {
 				reachedCheckpoint = true

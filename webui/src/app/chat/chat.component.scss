@@ -138,3 +138,31 @@
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
   }
   
+  .logo {
+    width: 100%;
+    max-width: 100px;
+    margin: 1rem auto;
+  }
+  .assistant-logo {
+    width: 75px;
+    margin-right: 0.5rem;
+    vertical-align: top;
+  }
+  
+  .assistant-message h4 {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  
+  .footprint {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #999;
+  }
+  

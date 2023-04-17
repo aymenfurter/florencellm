@@ -9,12 +9,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { ChatComponent } from './chat/chat.component';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { LinkifyPipe } from './linkify.pipe';
 
 
 @NgModule({
   declarations: [
     AppComponent,
-    ChatComponent
+    ChatComponent,
+    LinkifyPipe
   ],
   imports: [
     BrowserModule,

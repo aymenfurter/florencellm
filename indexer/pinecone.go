@@ -18,8 +18,6 @@ func storeEmbeddings(commitId string, embeddings []*pinecone_grpc.Vector) error 
 	pineconeAPIURL = fmt.Sprintf("%s/vectors/upsert", pineconeAPIURL)
 	apiKey := os.Getenv("PINECONE_API_KEY")
 
-	//vectors := transformToPineconeVectors(commitId, embeddings)
-
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"vectors": embeddings,
 	})
