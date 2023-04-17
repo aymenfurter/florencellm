@@ -13,7 +13,7 @@ export class ChatComponent {
 
   sampleQueries = [
     "I am looking for someone that knows the Azure CNI Overlay within Azure Kubernetes service",
-    "Who is the right person to talk to when I am interested regarding Azure Container Service workload profiles?",
+    "Who is the right person to talk to when I am interesting regarding Service Connections in Azure Container Services?",
     "I need help with the Capture cost requirements on Azure. Who is the expert on this?",
     "Who can help me to learn more about Azure Container Instances with VNET integration?"
   ];

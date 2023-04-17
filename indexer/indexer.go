@@ -121,7 +121,7 @@ func processRepository(ctx context.Context, repo Repository, lastCommit string) 
 	}
 
 	var wg sync.WaitGroup
-	sem := semaphore.NewWeighted(50)
+	sem := semaphore.NewWeighted(1)
 	branchesRemaining := true
 
 	for branchesRemaining {

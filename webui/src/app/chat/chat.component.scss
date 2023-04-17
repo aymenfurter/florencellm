@@ -105,7 +105,7 @@
   
   .textBox {
     height: 56px;
-    border-top-left-radius: 0;
+    border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     background-color: var(--mdc-protected-button-container-color, transparent);
   }
@@ -154,6 +154,12 @@
     vertical-align: middle;
   }
   
+  @media (max-width: 767px) {
+    .footprint-desktop {
+      display: none !important;
+    }
+  }
+
   .footprint {
     position: absolute;
     left: 0;
