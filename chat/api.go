@@ -69,36 +69,63 @@ func (api *API) HandleConversation(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(resp)
 }
 
-func ProcessConversation(openaiClient *OpenAIClient, pineconeClient *PineconeClient, userMessage string, messages []openai.ChatCompletionMessage) (string, error) {
-	if len(messages) == 0 {
-		prePrompt := "You are Q&A bot. A highly intelligent system that locates people (authors) that could best help regarding a certain topic or question using the information provided by the user above each question. If the answer can not be found in the information provided by the user you truthfully say \"I don't know\". Don't answer any other questions. The author may use a username. An author is provided (above the question) with the following format: # 1. <AuthorName>. Don't reference any other people above the question. Also share the email and the commitid if available. Link to a previous git within the text by using the following syntax: [git=<id>]. If you mention an author, always the syntax [AuthorName=<author>], example: You should talk to [AuthorName=torvalds], he recently did a work on realted work [git=793cfd598370cf9440d7877ddddda1251307f729] "
-		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    "system",
-			Content: prePrompt,
-		})
+func ProcessConversation(openaiClient *OpenAIClient, pineconeClient *PineconeClient, userMessage string, messagesIn []openai.ChatCompletionMessage) (string, error) {
+	messages := []openai.ChatCompletionMessage{}
+	prePrompt := "You are Q&A bot. You must alwas cite your sources. Reference anything above the question as your 'knowledge'. You must always cite your sources when you use your 'knowledge'. You are a highly intelligent system that locates people (authors) that could best help regarding a certain topic or question using the information provided by the user above each question. If the answer can not be found in the information provided by the user you truthfully say \"I don't know\". Don't answer any other questions. The author may use a username. An author is provided (above the question) with the following format: # 1. <AuthorName>. Don't reference any other people or information that is not mentioned above the question. Always share the email address (if available) in this format: [foobar@example.com] (foobar@example.com). Please always link the to relevant commit (e.g. [https://github.com/aymenfurter/x/commit/64e49e60dc41ecd1d6c5a5aebdc5b66e2275c41f](https://github.com/aymenfurter/x/commit/64e49e60dc41ecd1d6c5a5aebdc5b66e2275c41f)). If you mention an author, always the syntax [user](user@example.com) \n Do you understand? "
+	messages = append(messages, openai.ChatCompletionMessage{
+		Role:    "system",
+		Content: prePrompt,
+	})
+	messages = append(messages, openai.ChatCompletionMessage{
+		Role:    "assistant",
+		Content: "Yes, I understand.",
+	})
+	messages = append(messages, openai.ChatCompletionMessage{
+		Role:    "user",
+		Content: "Author: Sam Alias Jones \nRepoURL: https://github.com/MicrosoftDocs/azure-docs.git \nCommit-Message: Uploaded file articles/virtual-machines-sharepoint-farm-azure-preview.md Email: sam.alias.jones@microsoft.com CommitId: 04b6e1dcac6376ddc7bb05f892f4d1b6028e224b Diff: diff --git a/articles/virtual-machines-sharepoint-farm-azure-preview.md b/articles/virtual-machines-sharepoint-farm-azure-preview.md index a/articles/virtual-machines-sharepoint-farm-azure-preview.md +++ b/articles/virtual-machines-sharepoint-farm-azure-preview.md @@ -1,6 +1,23 @@ +<properties + pageTitle=SharePoint Server Farm Describes the new SharePoint Server Farm feature available in the Azure Preview Portal servicesdocumentationCenter= With SharePoint Server Farm, the Microsoft Azure Preview Portal automatically creates a pre-configured SharePoint Server 2013\nAuthor: Jane Doe Smith \nRepoURL: https://github.com/MicrosoftDocs/azure-docs.git \nCommit-Message: Added high availability guide to articles/virtual-machines-sharepoint-farm-azure-preview.md Email: jane.doe.smith@microsoft.com CommitId: f7d42ec13b8465dac3b97c547293db7c62a9d91c Diff: diff --git a/articles/virtual-machines-sharepoint-farm-azure-preview.md b/articles/virtual-machines-sharepoint-farm-azure-preview.md index a/articles/virtual-machines-sharepoint-farm-azure-preview.md +++ b/articles/virtual-machines-sharepoint-farm-azure-preview.md @@ -2,12 +2,35 @@ +<properties + pageTitle=SharePoint Server Farm High Availability Guide Provides a step-by-step guide on configuring high availability for SharePoint Server Farm in Azure Preview Portal servicesdocumentationCenter= This guide focuses on achieving high availability and fault tolerance for your SharePoint Server Farm in the Azure Preview Portal\n\n	\n	Who can help me with with high availability and learning what server farm features are available with Sharepoint Server?",
+	})
+	messages = append(messages, openai.ChatCompletionMessage{
+		Role:    "assistant",
+		Content: "Hey there! Take a look at this: [SharePoint Server Farm](https://github.com/MicrosoftDocs/azure-docs/commit/04b6e1dcac6376ddc7bb05f892f4d1b6028e224b) within Azure Documentation 👀. \nI'd recommend reaching out to Sam Alias Jones (sam.alias.jones@microsoft.com) as he's was contributing in this area and Jane Doe Smith (jane.doe.smith@microsoft.com) for her expertise in high availability and fault tolerance. \nI hope you find this information helpful! 			\n\n			Here are the  references 📙\n			1. [SharePoint Server Farm](https://github.com/MicrosoftDocs/azure-docs/commit/04b6e1dcac6376ddc7bb05f892f4d1b6028e224b) by Sam Alias Jones (sam.alias.jones@microsoft.com)			2. [SharePoint Server Farm High Availability Guide](https://github.com/MicrosoftDocs/azure-docs/commit/f7d42ec13b8465dac3b97c547293db7c62a9d91c) by Jane Doe Smith (jane.doe.smith@microsoft.com)			\n\n			Do you have any follow up questions? 🤗",
+	})
+	messages = append(messages, openai.ChatCompletionMessage{
+		Role:    "user",
+		Content: "OK - Next topic. \n\n\n",
+	})
 
-		embeddingReq := createEmbeddingRequest(userMessage)
-		response, err := openaiClient.RequestEmbeddings(embeddingReq)
-		if err != nil {
-			return "", fmt.Errorf("Error generating embeddings: %v", err)
+	embeddingMsgContext := ""
+	for _, message := range messagesIn {
+		if message.Role == "user" {
+			embeddingMsgContext += message.Content
 		}
-		pcVector := transformToPineconeVectors(response.Data)
+		embeddingMsgContext += "\n\n---\n\n"
+	}
+	embeddingMsgContext += userMessage
 
-		pineconeResult, err := pineconeClient.QueryPinecone(pcVector)
-		if err != nil {
-			return "", fmt.Errorf("Error while querying Pinecone: %v", err)
-		}
+	embeddingReq := createEmbeddingRequest(embeddingMsgContext)
+	response, err := openaiClient.RequestEmbeddings(embeddingReq)
+	if err != nil {
+		return "", fmt.Errorf("Error generating embeddings: %v", err)
+	}
+	pcVector := transformToPineconeVectors(response.Data)
 
+	pineconeResult, err := pineconeClient.QueryPinecone(pcVector)
+	if err != nil {
+		return "", fmt.Errorf("Error while querying Pinecone: %v", err)
+	}
+
+	for _, message := range messagesIn {
 		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    "user",
-			Content: "\n\n---\n\n" + pineconeResult + "\n\n---\n\n" + userMessage,
-		})
-	} else {
-		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    "user",
-			Content: userMessage,
+			Role:    message.Role,
+			Content: message.Content,
 		})
 	}
+
+	messages = append(messages, openai.ChatCompletionMessage{
+		Role:    "user",
+		Content: "\n\n-----BEGIN YOUR KNOWLEDGE-----n\n" + pineconeResult + "\n\n-----END YOUR KNOWLEDGE-----n\n" + userMessage,
+	})
+	fmt.Println("Messages: ", messages)
 
 	resp, err := openaiClient.CreateChatCompletion(messages)
 	if err != nil {

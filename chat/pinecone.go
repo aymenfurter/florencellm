@@ -6,8 +6,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 	"regexp"
+	"strings"
 )
 
 type PineconeClient struct {
@@ -20,6 +23,32 @@ func NewPineconeClient(apiURL, apiKey string) *PineconeClient {
 		APIURL: apiURL,
 		APIKey: apiKey,
 	}
+}
+
+var blockedUsers = retrieveAndCacheBlockedUserList()
+
+func retrieveAndCacheBlockedUserList() []string {
+	url := os.Getenv("BLOCKED_LIST_URL")
+
+	if url == "" {
+		return []string{}
+	}
+
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("Error making request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Error reading body: %v", err)
+	}
+
+	sb := string(body)
+
+	s := strings.Split(sb, "\n")
+	return s
 }
 
 func (client *PineconeClient) QueryPinecone(query []float32) (string, error) {
@@ -64,12 +93,7 @@ func (client *PineconeClient) QueryPinecone(query []float32) (string, error) {
 	matches := result["matches"].([]interface{})
 	matchOutput := ""
 	authorRE := regexp.MustCompile(`Author:\s(.+)`)
-
-	// TODO - Index all blocked users and expose this as a config
-	blockedUsers := []string{
-		"huypub",
-		"prmerger-automator",
-	}
+	emailRE := regexp.MustCompile(`Email:\s(.+)`)
 
 	for i, match := range matches {
 		match := match.(map[string]interface{})
@@ -78,58 +102,30 @@ func (client *PineconeClient) QueryPinecone(query []float32) (string, error) {
 
 		validUser := true
 		author := authorRE.FindStringSubmatch(text)[1]
+		email := emailRE.FindStringSubmatch(text)[1]
 		if author != "" {
 			for _, blockedUser := range blockedUsers {
-				if author == blockedUser {
-					fmt.Printf("Blocked user: %s", author)
+				if strings.HasPrefix(email, blockedUser) || strings.HasPrefix(blockedUser, email) {
+					validUser = false
+				}
+				if strings.HasPrefix(blockedUser, author) || strings.HasPrefix(author, blockedUser) {
 					validUser = false
 				}
 			}
 		}
 
-		fmt.Printf("Allowed user: %s", author)
-
-		//if author != "" {
-		//	url := "https://github.com/" + author
-
-		//	resp, err := http.Get(url)
-		//	if err != nil {
-		//		log.Fatalf("Error making request: %v", err)
-		//	}
-		//	defer resp.Body.Close()
-
-		//	if resp.StatusCode == http.StatusOK {
-		//		doc, err := goquery.NewDocumentFromReader(resp.Body)
-		//		if err != nil {
-		//			log.Fatalf("Error parsing HTML: %v", err)
-		//		}
-
-		//		userProfileBio := doc.Find(".user-profile-bio").Text()
-		//		for _, word := range blocklist {
-		//			if strings.Contains(userProfileBio, word) {
-		//				fmt.Println("Blocked" + author)
-		//				continue
-		//			}
-		//		}
-		//	} else {
-		//		fmt.Println("Not checked " + author)
-		//	}
-
-		//}
-
-		output := fmt.Sprintf("\n\n# %d. %s\n", i+1, text)
-		if len(output) > 500 {
-			output = output[:500]
-		}
-
 		if validUser {
+			output := fmt.Sprintf("\n\n# %d. %s\n", i+1, text)
+			if len(output) > 1000 {
+				output = output[:1000]
+			}
+
 			matchOutput += output + "\n\n"
 		}
 
-		if len(matchOutput) > 4500 {
+		if len(matchOutput) > 3500 {
 			break
 		}
-
 	}
 
 	return matchOutput, nil

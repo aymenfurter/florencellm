@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"sync"
 
@@ -69,6 +70,11 @@ func processRepository(ctx context.Context, repo Repository, lastCommit string) 
 	}
 
 	folderName := repo.URL[strings.LastIndex(repo.URL, "/")+1:]
+	// check if FolderName exists
+	folderExists := false
+	if _, err := os.Stat("/tmp/" + folderName); err == nil {
+		folderExists = true
+	}
 
 	storer := filesystem.NewStorage(
 		osfs.New("/tmp/"+folderName+"/"),
@@ -79,7 +85,7 @@ func processRepository(ctx context.Context, repo Repository, lastCommit string) 
 	r := &git.Repository{}
 
 	_, err := storer.Reference(plumbing.ReferenceName("refs/heads/main"))
-	if err == nil {
+	if folderExists {
 		fmt.Println("Repository already exists.. ", repo.URL)
 		r, err = git.Open(storer, osfs.New("/tmp/"+folderName+"/"))
 	} else {
