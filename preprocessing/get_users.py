@@ -84,10 +84,7 @@ def get_contributors_with_bios(owner, repo, github_token, max_commits=12000):
 
 if __name__ == "__main__":
     owner = "MicrosoftDocs"
-    #repo ="architecture-center"
     repo = "azure-devops-docs"
-    # repo = "Virtualization-Documentation"
-    # repo = "PowerShell-Docs"
 
     documentation_keywords = [
         "Writer", "Documentation", "Content Developer", "Documentation",

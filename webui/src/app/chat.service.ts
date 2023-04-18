@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-
-const API_URL = 'http://localhost:8080/conversation'; // Replace with your Chat API URL
+import { environment  } from 'src/environments/environment';
+const API_URL = environment + 'api/conversation'; 
 
 @Injectable({
   providedIn: 'root',

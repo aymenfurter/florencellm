@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { ChatService } from '../chat.service';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-chat',
@@ -11,12 +12,8 @@ export class ChatComponent {
   messages: { role: string; content: string }[] = [];
   isLoading = false;
 
-  sampleQueries = [
-    "I am looking for someone that knows the Azure CNI Overlay within Azure Kubernetes service",
-    "Who is the right person to talk to when I am interesting regarding Service Connections in Azure Container Services?",
-    "I need help with the Capture cost requirements on Azure. Who is the expert on this?",
-    "Who can help me to learn more about Azure Container Instances with VNET integration?"
-  ];
+  sampleQueries = environment.sampleQueries;
+
 
   constructor(private chatService: ChatService) {}
 
