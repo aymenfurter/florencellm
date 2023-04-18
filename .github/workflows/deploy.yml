@@ -33,7 +33,7 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.CHAT_APP_NAME }} \
             --image ghcr.io/aymenfurter/florance/chat:latest \
-            --registry-server-url https://ghcr.io \
+            --registry-server https://ghcr.io \
             --registry-server-user ${{ github.actor }} \
             --registry-server-password ${{ secrets.GITHUB_TOKEN }} \
             --environment-variables \
@@ -51,7 +51,7 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.WEBUI_APP_NAME }} \
             --image ghcr.io/aymenfurter/florance/webui:latest \
-            --registry-server-url https://ghcr.io \
+            --registry-server https://ghcr.io \
             --registry-server-user ${{ github.actor }} \
             --registry-server-password ${{ secrets.GITHUB_TOKEN }} \
             --port 80
