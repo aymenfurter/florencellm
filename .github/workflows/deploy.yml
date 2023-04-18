@@ -36,7 +36,7 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.CHAT_APP_NAME }} \
             --image ghcr.io/aymenfurter/florance/chat:3c75a73a65e2a7714ef143a98e5e68052efdd17f \
-            --environment ${{ env.ENV_NAME }}
+            --environment ${{ env.ENV_NAME }} \
             --ingress external \
             --secrets pinecone_api_key=${{ secrets.PINECONE_API_KEY }} \
               pinecone_api_url=${{ secrets.PINECONE_API_URL }} \
