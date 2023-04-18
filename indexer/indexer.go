@@ -119,7 +119,7 @@ func processBranches(ctx context.Context, r *git.Repository, lastCommit string, 
 	}
 
 	var wg sync.WaitGroup
-	sem := semaphore.NewWeighted(1)
+	sem := semaphore.NewWeighted(50)
 	branchesRemaining := true
 
 	for branchesRemaining {
@@ -177,7 +177,7 @@ func handleCommit(ctx context.Context, commit *object.Commit, err error, r *git.
 
 		wg.Add(1)
 		go func() {
-			defer sem.Release(50)
+			defer sem.Release(1)
 			defer wg.Done()
 
 			fmt.Printf("Processing commit: %s\n", commit.Hash.String())
