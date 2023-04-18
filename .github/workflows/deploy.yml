@@ -38,13 +38,18 @@ jobs:
             --image ghcr.io/aymenfurter/florance/chat:latest \
             --environment ${{ env.ENV_NAME }}
             --ingress external \
-            --env-vars \
-              PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }} \
-              PINECONE_API_URL=${{ secrets.PINECONE_API_URL }} \
-              PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }} \
-              PINECONE_PROJECT_NAME=${{ secrets.PINECONE_PROJECT_NAME }} \
-              PINECONE_ENV=${{ secrets.PINECONE_ENV }} \
-              OPEN_AI_KEY=${{ secrets.OPEN_AI_KEY }} \
+            --secrets pinecone_api_key=${{ secrets.PINECONE_API_KEY }} \
+              pinecone_api_url=${{ secrets.PINECONE_API_URL }} \
+              pinecone_index_name=${{ secrets.PINECONE_INDEX_NAME }} \
+              pinecone_project_name=${{ secrets.PINECONE_PROJECT_NAME }} \
+              pinecone_env=${{ secrets.PINECONE_ENV }} \
+              open_ai_key=${{ secrets.OPEN_AI_KEY }} \
+            --env-vars PINECONE_API_KEY=secretref:pinecone_api_key \
+              PINECONE_API_URL=secretref:pinecone_api_url \
+              PINECONE_INDEX_NAME=secretref:pinecone_index_name \
+              PINECONE_PROJECT_NAME=secretref:pinecone_project_name \
+              PINECONE_ENV=secretref:pinecone_env \
+              OPEN_AI_KEY=secretref:open_ai_key \
             --target-port 8080
 
       - name: Deploy webui app to Azure Container Apps
