@@ -17,6 +17,8 @@ export class LinkifyPipe implements PipeTransform {
 
     // Replace email addresses
     const emailPattern = /(\S+@\S+\.\S+)/g;
+    
+    newVal = newVal.replace(/\(|\)/g, '');
     newVal = newVal.replace(emailPattern, '<a class="link" href="https://teams.microsoft.com/l/chat/0/0?users=$1" target="_blank" rel="noopener noreferrer">💬 $1</a>');
 
     return newVal;
