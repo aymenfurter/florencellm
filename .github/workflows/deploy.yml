@@ -31,11 +31,11 @@ jobs:
       - name: Deploy chat app to Azure Container Apps
         run: |
           az config set extension.use_dynamic_install=yes_without_prompt
-          az containerapp env create --name ${{ env.ENV_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
+          # az containerapp env create --name ${{ env.ENV_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
           az containerapp create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.CHAT_APP_NAME }} \
-            --image ghcr.io/aymenfurter/florance/chat:latest \
+            --image ghcr.io/aymenfurter/florance/chat:3c75a73a65e2a7714ef143a98e5e68052efdd17f \
             --environment ${{ env.ENV_NAME }}
             --ingress external \
             --secrets pinecone_api_key=${{ secrets.PINECONE_API_KEY }} \
@@ -59,7 +59,7 @@ jobs:
             --environment ${{ env.ENV_NAME }} \
             --name ${{ env.WEBUI_APP_NAME }} \
             --ingress external \
-            --image ghcr.io/aymenfurter/florance/webui:latest \
+            --image ghcr.io/aymenfurter/florance/webui:3c75a73a65e2a7714ef143a98e5e68052efdd17f \
             --target-port 80
 
       - name: Create Azure API Management
