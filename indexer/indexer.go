@@ -134,12 +134,15 @@ func processBranches(ctx context.Context, r *git.Repository, lastCommit string, 
 		}
 
 		fmt.Printf("Processing branch: %s\n", ref.Name().Short())
+		mutex.Lock()
+		iter, err := r.Log(&git.LogOptions{From: ref.Hash()})
+		mutex.Unlock()
 
 		commitRemaining := true
 		reachedCheckpoint := lastCommit == ""
 
 		for commitRemaining {
-			commit, err := getNextCommit(r, ref)
+			commit, err := getNextCommit(iter)
 			commitRemaining, reachedCheckpoint, err = handleCommit(ctx, commit, err, r, &wg, sem, repo.URL, lastCommit, reachedCheckpoint)
 			if err != nil {
 				return err
@@ -149,9 +152,8 @@ func processBranches(ctx context.Context, r *git.Repository, lastCommit string, 
 	return nil
 }
 
-func getNextCommit(r *git.Repository, ref *plumbing.Reference) (*object.Commit, error) {
+func getNextCommit(iter object.CommitIter) (*object.Commit, error) {
 	mutex.Lock()
-	iter, err := r.Log(&git.LogOptions{From: ref.Hash()})
 	commit, err := iter.Next()
 	mutex.Unlock()
 	if err != nil {
