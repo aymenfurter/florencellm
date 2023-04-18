@@ -40,7 +40,7 @@ jobs:
               PINECONE_PROJECT_NAME=${{ secrets.PINECONE_PROJECT_NAME }} \
               PINECONE_ENV=${{ secrets.PINECONE_ENV }} \
               OPEN_AI_KEY=${{ secrets.OPEN_AI_KEY }} \
-            --port 8080
+            --target-port 8080
 
       - name: Deploy webui app to Azure Container Apps
         run: |
@@ -48,7 +48,7 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.WEBUI_APP_NAME }} \
             --image ghcr.io/aymenfurter/florance/webui:latest \
-            --port 80
+            --target-port 80
 
       - name: Create Azure API Management
         run: |
