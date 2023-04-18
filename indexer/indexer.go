@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -13,12 +14,10 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/go-git/go-git/v5/plumbing/storer"
-
-	//"github.com/go-git/go-git/v5/storage/memory"
+	"golang.org/x/sync/semaphore"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"golang.org/x/sync/semaphore"
 )
 
 func indexRepository(ctx context.Context, repoID string, repoCol *mongo.Collection) error {
@@ -52,15 +51,6 @@ func getNextReference(refIter storer.ReferenceIter) (*plumbing.Reference, error)
 	return ref, nil
 }
 
-func getNextCommit(iter object.CommitIter) (*object.Commit, error) {
-	mutex.Lock()
-	commit, err := iter.Next()
-	mutex.Unlock()
-	if err != nil {
-		return nil, err
-	}
-	return commit, nil
-}
 func gitClone(repoURL, folderName, referenceName string, depth int) error {
 	tmpDir := filepath.Join(tempDir(), folderName)
 	err := os.MkdirAll(tmpDir, 0755)
@@ -92,29 +82,37 @@ func processRepository(ctx context.Context, repo Repository, lastCommit string) 
 		return fmt.Errorf("repository URL is empty")
 	}
 
-	folderName := repo.URL[strings.LastIndex(repo.URL, "/")+1:]
-	folderName = folderName[:len(folderName)-4]
+	folderName := extractFolderName(repo.URL)
+	fmt.Printf("Cloning repository: %s\n", repo.URL)
 
-	fmt.Println("Cloning repository.. ", repo.URL)
+	r, err := openOrCloneRepo(repo.URL, folderName, "main", 20000)
+	if err != nil {
+		return err
+	}
 
-	r := &git.Repository{}
-	var err error
+	fmt.Printf("Cloning completed: %s\n", repo.URL)
+	return processBranches(ctx, r, lastCommit, repo)
+}
 
-	// check if repo is already checked out
-	if _, err := os.Stat(tempDir() + "/" + folderName); os.IsNotExist(err) {
-		err = gitClone(repo.URL, folderName, "main", 20000)
+func extractFolderName(url string) string {
+	folderName := url[strings.LastIndex(url, "/")+1:]
+	return folderName[:len(folderName)-4]
+}
+
+func openOrCloneRepo(url, folderName, branch string, depth int) (*git.Repository, error) {
+	tempFolderPath := filepath.Join(tempDir(), folderName)
+
+	if _, err := os.Stat(tempFolderPath); os.IsNotExist(err) {
+		err = gitClone(url, folderName, branch, depth)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
-	r, err = git.PlainOpen(tempDir() + "/" + folderName)
+	return git.PlainOpen(tempFolderPath)
+}
 
-	fmt.Println("Cloning completed.. ", repo.URL)
-	if err != nil {
-		return fmt.Errorf("failed to clone repository: %w", err)
-	}
-
+func processBranches(ctx context.Context, r *git.Repository, lastCommit string, repo Repository) error {
 	refIter, err := r.Branches()
 	if err != nil {
 		return fmt.Errorf("failed to get branches: %w", err)
@@ -130,113 +128,118 @@ func processRepository(ctx context.Context, repo Repository, lastCommit string) 
 			branchesRemaining = false
 			break
 		}
-		if (ref.Name().Short() != "master") && (ref.Name().Short() != "main") {
-			return nil
-		}
-		fmt.Println("Processing branch: ", ref.Name().Short())
-		mutex.Lock()
-		iter, err := r.Log(&git.LogOptions{From: ref.Hash()})
-		mutex.Unlock()
 
-		if err != nil {
-			return fmt.Errorf("failed to get log: %w", err)
+		if !isMasterOrMainBranch(ref.Name().Short()) {
+			continue
 		}
+
+		fmt.Printf("Processing branch: %s\n", ref.Name().Short())
 
 		commitRemaining := true
-		reachedCheckpoint := false
-
-		if lastCommit == "" {
-			reachedCheckpoint = true
-		}
+		reachedCheckpoint := lastCommit == ""
 
 		for commitRemaining {
-			commit, err := getNextCommit(iter)
-
-			if reachedCheckpoint == false && commit != nil && commit.Hash.String() != lastCommit {
-				fmt.Println("Skipping commit: ", commit.Hash.String())
-			} else {
-				reachedCheckpoint = true
-				if err != nil || ref == nil {
-					commitRemaining = false
-					break
-				}
-
-				if err := sem.Acquire(ctx, 1); err != nil {
-					return fmt.Errorf("failed to acquire semaphore: %w", err)
-				}
-
-				wg.Add(1)
-				go func() {
-					defer sem.Release(1)
-					defer wg.Done()
-
-					fmt.Println("Processing commit: ", commit.Hash.String())
-					err := processCommit(ctx, commit, repo.URL)
-					if err != nil {
-						fmt.Println("Warning: failed to process commit: ", err.Error())
-					}
-				}()
+			commit, err := getNextCommit(r, ref)
+			commitRemaining, reachedCheckpoint, err = handleCommit(ctx, commit, err, r, &wg, sem, repo.URL, lastCommit, reachedCheckpoint)
+			if err != nil {
+				return err
 			}
 		}
-		if err != nil {
-			fmt.Println("Warning: failed to iterate through commits: ", err.Error())
-		}
-		return nil
 	}
+	return nil
+}
+
+func getNextCommit(r *git.Repository, ref *plumbing.Reference) (*object.Commit, error) {
+	mutex.Lock()
+	iter, err := r.Log(&git.LogOptions{From: ref.Hash()})
+	mutex.Unlock()
+
 	if err != nil {
-		return fmt.Errorf("failed to iterate through branches: %w", err)
+		return nil, fmt.Errorf("failed to get log: %w", err)
 	}
 
-	wg.Wait()
-	return nil
+	return iter.Next()
+}
+
+func handleCommit(ctx context.Context, commit *object.Commit, err error, r *git.Repository, wg *sync.WaitGroup, sem *semaphore.Weighted, repoURL, lastCommit string, reachedCheckpoint bool) (bool, bool, error) {
+	if reachedCheckpoint == false && commit != nil && commit.Hash.String() != lastCommit {
+		fmt.Printf("Skipping commit: %s\n", commit.Hash.String())
+	} else {
+		reachedCheckpoint = true
+		if err != nil || commit == nil {
+			return false, reachedCheckpoint, err
+		}
+
+		if err := sem.Acquire(ctx, 1); err != nil {
+			return false, reachedCheckpoint, fmt.Errorf("failed to acquire semaphore: %w", err)
+		}
+
+		wg.Add(1)
+		go func() {
+			defer sem.Release(1)
+			defer wg.Done()
+
+			fmt.Printf("Processing commit: %s\n", commit.Hash.String())
+			err := processCommit(ctx, commit, repoURL)
+			if err != nil {
+				fmt.Printf("Warning: failed to process commit: %s\n", err.Error())
+			}
+		}()
+	}
+	return true, reachedCheckpoint, nil
+}
+
+func isMasterOrMainBranch(branch string) bool {
+	return branch == "master" || branch == "main"
 }
 
 func commitToJSON(username string, email string, diff string) string {
 	return fmt.Sprintf(`{"username": "%s", "email": "%s", "diff": "%s"}`, username, email, diff)
 }
 
-func getDiff(commit *object.Commit) string {
+func getDiff(commit *object.Commit) (string, error) {
 	if commit == nil || commit.NumParents() == 0 {
-		return ""
+		return "", nil
 	}
 
 	previousCommit, err := commit.Parent(0)
 	if err != nil {
-		fmt.Println("Error getting parent commit:", err)
-		return ""
+		return "", fmt.Errorf("error getting parent commit: %w", err)
 	}
 
 	if previousCommit == nil {
-		fmt.Println("Error: previousCommit is nil")
-		return ""
+		return "", errors.New("previousCommit is nil")
 	}
 
-	diff, err2 := previousCommit.Patch(commit)
-	if err2 != nil {
-		fmt.Println("Error getting diff:", err2)
-		return ""
+	diff, err := previousCommit.Patch(commit)
+	if err != nil {
+		return "", fmt.Errorf("error getting diff: %w", err)
 	}
 
 	diffString := diff.String()
 	if len(diffString) > 32000 {
 		diffString = diffString[:32000]
 	}
-	return diffString
+	return diffString, nil
 }
 
-func processCommit(ctx context.Context, commit *object.Commit, repoUrl string) error {
+func processCommit(ctx context.Context, commit *object.Commit, repoURL string) error {
 	author := commit.Author
 	email := author.Email
-	diffString := getDiff(commit)
-	commitId := commit.Hash.String()
+	diffString, err := getDiff(commit)
+	if err != nil {
+		return fmt.Errorf("failed to get diff: %w", err)
+	}
+
+	commitID := commit.Hash.String()
 	commitMsg := commit.Message
-	embeddings, err := generateEmbeddings(commitMsg, author, email, diffString, commitId, repoUrl)
+	embeddings, err := generateEmbeddings(commitMsg, author, email, diffString, commitID, repoURL)
 
 	if err != nil {
 		return fmt.Errorf("failed to generate embeddings: %w", err)
 	}
 
-	err = storeEmbeddings(commitId, embeddings)
+	err = storeEmbeddings(commitID, embeddings)
 	if err != nil {
 		return fmt.Errorf("failed to store embeddings in Pinecone: %w", err)
 	}

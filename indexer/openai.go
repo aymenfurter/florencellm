@@ -117,7 +117,6 @@ func requestEmbeddings(client *openai.Client, embeddingReq openai.EmbeddingReque
 		return nil, fmt.Errorf("failed to generate embeddings from OpenAI: %w", err)
 	}
 
-	//time.Sleep(1 * time.Second) // rate limit
 	return &response, nil
 }
 
