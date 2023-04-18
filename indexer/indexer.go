@@ -177,7 +177,7 @@ func handleCommit(ctx context.Context, commit *object.Commit, err error, r *git.
 
 		wg.Add(1)
 		go func() {
-			defer sem.Release(1)
+			defer sem.Release(50)
 			defer wg.Done()
 
 			fmt.Printf("Processing commit: %s\n", commit.Hash.String())
