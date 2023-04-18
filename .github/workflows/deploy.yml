@@ -39,61 +39,22 @@ jobs:
             --environment ${{ env.ENV_NAME }} \
             --ingress external \
             --secrets pinecone_api_key="${{ secrets.PINECONE_API_KEY }}" \
-              pinecone_api_url="${{ secrets.PINECONE_API_URL }}" \
-              pinecone_index_name="${{ secrets.PINECONE_INDEX_NAME }}" \
-              pinecone_project_name="${{ secrets.PINECONE_PROJECT_NAME }}" \
-              pinecone_env="${{ secrets.PINECONE_ENV }}" \
-              open_ai_key="${{ secrets.OPEN_AI_KEY }}" \
-            --env-vars PINECONE_API_KEY=secretref:pinecone_api_key \
-              PINECONE_API_URL=secretref:pinecone_api_url \
-              PINECONE_INDEX_NAME=secretref:pinecone_index_name \
-              PINECONE_PROJECT_NAME=secretref:pinecone_project_name \
-              PINECONE_ENV=secretref:pinecone_env \
-              OPEN_AI_KEY=secretref:open_ai_key \
+              pineconeapiurl="${{ secrets.PINECONE_API_URL }}" \
+              pineconeindexname="${{ secrets.PINECONE_INDEX_NAME }}" \
+              pineconeprojectname="${{ secrets.PINECONE_PROJECT_NAME }}" \
+              pineconeenv="${{ secrets.PINECONE_ENV }}" \
+              openaikey="${{ secrets.OPEN_AI_KEY }}" \
+            --env-vars PINECONE_API_KEY=secretref:pineconeapikey \
+              PINECONE_API_URL=secretref:pineconeapiurl \
+              PINECONE_INDEX_NAME=secretref:pineconeindexname \
+              PINECONE_PROJECT_NAME=secretref:pineconeprojectname \
+              PINECONE_ENV=secretref:pineconeenv \
+              OPEN_AI_KEY=secretref:openaikey \
             --target-port 8080
-
-      - name: Deploy webui app to Azure Container Apps
-        run: |
-          az containerapp create \
+            az containerapp create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --environment ${{ env.ENV_NAME }} \
             --name ${{ env.WEBUI_APP_NAME }} \
             --ingress external \
             --image ghcr.io/aymenfurter/florance/webui:3c75a73a65e2a7714ef143a98e5e68052efdd17f \
             --target-port 80
-
-      - name: Create Azure API Management
-        run: |
-          az apim create \
-            --name ${{ env.APIM_NAME }} \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --location ${{ env.LOCATION }} \
-            --publisher-email "youremail@example.com" \
-            --publisher-name "Your Name"
-
-      - name: Add API Management backend for chat app
-        run: |
-          CHAT_APP_URL=$(az containerapp show \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --name ${{ env.CHAT_APP_NAME }} \
-            --query 'properties.address.fqdn' \
-            --output tsv)
-          az apim api import \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --service-name ${{ env.APIM_NAME }} \
-            --path "/chat" \
-            --display-name "Chat API" \
-            --protocols https \
-            --api-id chatapi \
-            --api-type http \
-            --specification-format OpenApiJson \
-            --specification-url https://path-to-your-openapi-spec.json
-          az apim backend create \
-            --resource-group ${{ env.RESOURCE_GROUP }} \
-            --service-name ${{ env.APIM_NAME }} \
-            --name "ChatAppBackend" \
-            --url "https://${CHAT_APP_URL}" \
-            --protocol http \
-            --api-id chatapi \
-            --subscription-required false
-
