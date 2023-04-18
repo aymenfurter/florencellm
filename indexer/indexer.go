@@ -152,13 +152,12 @@ func processBranches(ctx context.Context, r *git.Repository, lastCommit string, 
 func getNextCommit(r *git.Repository, ref *plumbing.Reference) (*object.Commit, error) {
 	mutex.Lock()
 	iter, err := r.Log(&git.LogOptions{From: ref.Hash()})
+	commit, err := iter.Next()
 	mutex.Unlock()
-
 	if err != nil {
-		return nil, fmt.Errorf("failed to get log: %w", err)
+		return nil, err
 	}
-
-	return iter.Next()
+	return commit, nil
 }
 
 func handleCommit(ctx context.Context, commit *object.Commit, err error, r *git.Repository, wg *sync.WaitGroup, sem *semaphore.Weighted, repoURL, lastCommit string, reachedCheckpoint bool) (bool, bool, error) {
