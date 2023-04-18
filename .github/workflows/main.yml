@@ -17,7 +17,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHTOKEN }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
@@ -47,4 +47,9 @@ jobs:
           tags: ghcr.io/${{ github.repository }}/webui:${{ github.sha }}
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache
-
+          build-args: |
+            QUESTION_1=${{ secrets.QUESTION_1 }}
+            QUESTION_2=${{ secrets.QUESTION_2 }}
+            QUESTION_3=${{ secrets.QUESTION_3 }}
+            QUESTION_4=${{ secrets.QUESTION_4 }}
+            TARGET_URL=${{ secrets.TARGET_URL }}
