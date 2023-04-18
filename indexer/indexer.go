@@ -225,13 +225,11 @@ func getDiff(commit *object.Commit) string {
 }
 
 func processCommit(ctx context.Context, commit *object.Commit, repoUrl string) error {
-	mutex.Lock()
 	author := commit.Author
 	email := author.Email
 	diffString := getDiff(commit)
 	commitId := commit.Hash.String()
 	commitMsg := commit.Message
-	mutex.Unlock()
 	embeddings, err := generateEmbeddings(commitMsg, author, email, diffString, commitId, repoUrl)
 
 	if err != nil {
