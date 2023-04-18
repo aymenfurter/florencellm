@@ -33,9 +33,6 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.CHAT_APP_NAME }} \
             --image ghcr.io/aymenfurter/florance/chat:latest \
-            --registry-server https://ghcr.io \
-            --registry-server-username ${{ github.actor }} \
-            --registry-server-password ${{ secrets.GITHUB_TOKEN }} \
             --environment-variables \
               PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }} \
               PINECONE_API_URL=${{ secrets.PINECONE_API_URL }} \
@@ -51,9 +48,6 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.WEBUI_APP_NAME }} \
             --image ghcr.io/aymenfurter/florance/webui:latest \
-            --registry-server https://ghcr.io \
-            --registry-server-username ${{ github.actor }} \
-            --registry-server-password ${{ secrets.GITHUB_TOKEN }} \
             --port 80
 
       - name: Create Azure API Management
