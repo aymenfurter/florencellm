@@ -1,0 +1,92 @@
+name: Deploy to Azure Container Apps and APIM
+
+on:
+  workflow_dispatch
+
+env:
+  RESOURCE_GROUP: florance-rg
+  CHAT_APP_NAME: florance-chat-app
+  WEBUI_APP_NAME: florance-webui-app
+  APIM_NAME: florance-apim
+  LOCATION: switzerlandnorth
+  
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v2
+
+      - name: Log in to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Create resource group
+        run: |
+          az group create --name ${{ env.RESOURCE_GROUP }} --location ${{ env.LOCATION }}
+
+      - name: Deploy chat app to Azure Container Apps
+        run: |
+          az containerapp create \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.CHAT_APP_NAME }} \
+            --image ghcr.io/aymenfurter/florance/chat:latest \
+            --docker-registry-server-url https://ghcr.io \
+            --docker-registry-server-user ${{ github.actor }} \
+            --docker-registry-server-password ${{ secrets.GITHUB_TOKEN }} \
+            --environment-variables \
+              PINECONE_API_KEY=${{ secrets.PINECONE_API_KEY }} \
+              PINECONE_API_URL=${{ secrets.PINECONE_API_URL }} \
+              PINECONE_INDEX_NAME=${{ secrets.PINECONE_INDEX_NAME }} \
+              PINECONE_PROJECT_NAME=${{ secrets.PINECONE_PROJECT_NAME }} \
+              PINECONE_ENV=${{ secrets.PINECONE_ENV }} \
+              OPEN_AI_KEY=${{ secrets.OPEN_AI_KEY }} \
+            --port 8080
+
+      - name: Deploy webui app to Azure Container Apps
+        run: |
+          az containerapp create \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.WEBUI_APP_NAME }} \
+            --image ghcr.io/aymenfurter/florance/webui:latest \
+            --docker-registry-server-url https://ghcr.io \
+            --docker-registry-server-user ${{ github.actor }} \
+            --docker-registry-server-password ${{ secrets.GITHUB_TOKEN }} \
+            --port 80
+
+      - name: Create Azure API Management
+        run: |
+          az apim create \
+            --name ${{ env.APIM_NAME }} \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --location ${{ env.LOCATION }} \
+            --publisher-email "youremail@example.com" \
+            --publisher-name "Your Name"
+
+      - name: Add API Management backend for chat app
+        run: |
+          CHAT_APP_URL=$(az containerapp show \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --name ${{ env.CHAT_APP_NAME }} \
+            --query 'properties.address.fqdn' \
+            --output tsv)
+          az apim api import \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --service-name ${{ env.APIM_NAME }} \
+            --path "/chat" \
+            --display-name "Chat API" \
+            --protocols https \
+            --api-id chatapi \
+            --api-type http \
+            --specification-format OpenApiJson \
+            --specification-url https://path-to-your-openapi-spec.json
+          az apim backend create \
+            --resource-group ${{ env.RESOURCE_GROUP }} \
+            --service-name ${{ env.APIM_NAME }} \
+            --name "ChatAppBackend" \
+            --url "https://${CHAT_APP_URL}" \
+            --protocol http \
+            --api-id chatapi \
+            --subscription-required false
+
