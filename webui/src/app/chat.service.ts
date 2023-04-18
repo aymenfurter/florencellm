@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment  } from 'src/environments/environment';
-const API_URL = environment + 'api/conversation'; 
+const API_URL = environment.targetUrl + 'api/conversation'; 
 
 @Injectable({
   providedIn: 'root',
