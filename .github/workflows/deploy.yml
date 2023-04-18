@@ -38,7 +38,7 @@ jobs:
             --image ghcr.io/aymenfurter/florance/chat:3c75a73a65e2a7714ef143a98e5e68052efdd17f \
             --environment ${{ env.ENV_NAME }} \
             --ingress external \
-            --secrets pinecone_api_key="${{ secrets.PINECONE_API_KEY }}" \
+            --secrets pineconeapikey="${{ secrets.PINECONE_API_KEY }}" \
               pineconeapiurl="${{ secrets.PINECONE_API_URL }}" \
               pineconeindexname="${{ secrets.PINECONE_INDEX_NAME }}" \
               pineconeprojectname="${{ secrets.PINECONE_PROJECT_NAME }}" \
