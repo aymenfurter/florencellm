@@ -31,7 +31,7 @@ jobs:
       - name: Deploy chat app to Azure Container Apps
         run: |
           az config set extension.use_dynamic_install=yes_without_prompt
-          # az containerapp env create --name ${{ env.ENV_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
+          az containerapp env create --name ${{ env.ENV_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
           az containerapp create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.CHAT_APP_NAME }} \
