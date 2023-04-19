@@ -34,7 +34,7 @@ func SetupRouter() *gin.Engine {
 		},
 	}))
 
-	router.POST("/conversation", func(c *gin.Context) {
+	router.POST("/api/conversation", func(c *gin.Context) {
 		var requestBody ConversationRequest
 		if err := c.BindJSON(&requestBody); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
