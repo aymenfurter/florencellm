@@ -37,7 +37,7 @@ jobs:
             --name ${{ env.CHAT_APP_NAME }} \
             --image ghcr.io/aymenfurter/florance/chat:3c75a73a65e2a7714ef143a98e5e68052efdd17f \
             --environment ${{ env.ENV_NAME }} \
-            --ingress external \
+            --ingress internal \
             --secrets pineconeapikey="${{ secrets.PINECONE_API_KEY }}" \
               pineconeapiurl="${{ secrets.PINECONE_API_URL }}" \
               pineconeindexname="${{ secrets.PINECONE_INDEX_NAME }}" \
@@ -55,6 +55,6 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --environment ${{ env.ENV_NAME }} \
             --name ${{ env.WEBUI_APP_NAME }} \
-            --ingress external \
+            --ingress internal \
             --image ghcr.io/aymenfurter/florance/webui:3c75a73a65e2a7714ef143a98e5e68052efdd17f \
             --target-port 80
