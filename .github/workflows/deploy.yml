@@ -63,5 +63,5 @@ jobs:
             --environment ${{ env.ENV_NAME }} \
             --name "traefik" \
             --ingress external \
-            --image docker pull ghcr.io/aymenfurter/florance/florance-traefik:2141c40 \
+            --image ghcr.io/aymenfurter/florance/florance-traefik:2141c40 \
             --target-port 80            
