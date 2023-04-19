@@ -35,7 +35,7 @@ jobs:
           az containerapp create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.CHAT_APP_NAME }} \
-            --image ghcr.io/aymenfurter/florance/chat:2141c4049400a9e45cee650c62238990f66d5a3d \
+            --image ghcr.io/aymenfurter/florance/chat:5c7b77cc5981d7370f0de272665ae73b13eea94a \
             --environment ${{ env.ENV_NAME }} \
             --ingress internal \
             --secrets pineconeapikey="${{ secrets.PINECONE_API_KEY }}" \
@@ -56,7 +56,7 @@ jobs:
             --environment ${{ env.ENV_NAME }} \
             --name ${{ env.WEBUI_APP_NAME }} \
             --ingress internal \
-            --image ghcr.io/aymenfurter/florance/webui:2141c4049400a9e45cee650c62238990f66d5a3d \
+            --image ghcr.io/aymenfurter/florance/webui:5c7b77cc5981d7370f0de272665ae73b13eea94a \
             --target-port 80
             az containerapp create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
