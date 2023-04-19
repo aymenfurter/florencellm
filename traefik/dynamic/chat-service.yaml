@@ -4,8 +4,8 @@ http:
       loadBalancer:
         passHostHeader: false
         servers:
-          - url: 'https://chat.internal.{{ env "CONTAINER_APP_ENV_DNS_SUFFIX" }}'
+          - url: 'https://chat.internal.{{ env "CONTAINER_APP_ENV_DNS_SUFFIX" }}/conversation'
   routers:
     menuitem:
-      rule: "Path(`/api`)"
+      rule: "Path(`/api/conversation`)"
       service: chat-service
