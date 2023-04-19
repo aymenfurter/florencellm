@@ -4,7 +4,7 @@ http:
       loadBalancer:
         passHostHeader: false
         servers:
-          - url: 'https://chat.internal.{{ env "CONTAINER_APP_ENV_DNS_SUFFIX" }}/conversation'
+          - url: 'https://florance-chat-app.internal.{{ env "CONTAINER_APP_ENV_DNS_SUFFIX" }}/conversation'
   routers:
     menuitem:
       rule: "Path(`/api/conversation`)"
