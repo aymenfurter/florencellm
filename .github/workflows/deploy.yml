@@ -35,7 +35,7 @@ jobs:
           az containerapp create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --name ${{ env.CHAT_APP_NAME }} \
-            --image ghcr.io/aymenfurter/florance/chat:bcef76972b1b89bdba009d466a60d8c287f5d671 \
+            --image ghcr.io/aymenfurter/florencellm/chat:bcef76972b1b89bdba009d466a60d8c287f5d671 \
             --environment ${{ env.ENV_NAME }} \
             --ingress internal \
             --secrets pineconeapikey="${{ secrets.PINECONE_API_KEY }}" \
@@ -56,12 +56,12 @@ jobs:
             --environment ${{ env.ENV_NAME }} \
             --name ${{ env.WEBUI_APP_NAME }} \
             --ingress internal \
-            --image ghcr.io/aymenfurter/florance/webui:bcef76972b1b89bdba009d466a60d8c287f5d671 \
+            --image ghcr.io/aymenfurter/florencellm/webui:bcef76972b1b89bdba009d466a60d8c287f5d671 \
             --target-port 80
             az containerapp create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --environment ${{ env.ENV_NAME }} \
             --name "traefik" \
             --ingress external \
-            --image ghcr.io/aymenfurter/florance/florance-traefik:d81e326 \
+            --image ghcr.io/aymenfurter/florencellm/florance-traefik:d81e326 \
             --target-port 80            
