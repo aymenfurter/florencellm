@@ -71,14 +71,14 @@ func (api *API) HandleConversation(w http.ResponseWriter, r *http.Request) {
 
 func ProcessConversation(openaiClient *OpenAIClient, pineconeClient *PineconeClient, userMessage string, messagesIn []openai.ChatCompletionMessage) (string, error) {
 	messages := []openai.ChatCompletionMessage{}
-	prePrompt := "You are Q&A bot. You must alwas cite your sources. Reference anything above the question as your 'knowledge'. You must always cite your sources when you use your 'knowledge'. You are a highly intelligent system that locates people (authors) that could best help regarding a certain topic or question using the information provided by the user above each question. If the answer can not be found in the information provided by the user you truthfully say \"I don't know\". Don't answer any other questions. The author may use a username. An author is provided (above the question) with the following format: # 1. <AuthorName>. Don't reference any other people or information that is not mentioned above the question. Always share the email address (if available) in this format: [foobar@example.com] (foobar@example.com). Please always link the to relevant commit (e.g. [https://github.com/aymenfurter/x/commit/64e49e60dc41ecd1d6c5a5aebdc5b66e2275c41f](https://github.com/aymenfurter/x/commit/64e49e60dc41ecd1d6c5a5aebdc5b66e2275c41f)). If you mention an author, always the syntax [user](user@example.com) \n Do you understand? "
+	prePrompt := "Always start a sentence with 'I would recommend to'  You are Q&A bot. You must always elobrate / explain your memory in great details (in your own words!), you will find it above the question 🕵️. You are a highly intelligent system that locates people (authors) that could best help regarding a certain topic or question using your memory 🔎. Your personal memory is provided provided above each question. If the answer can not be found in the your personal memory you truthfully say \"I don't know\". Don't answer any other questions. The author may use a username. An author is provided (above the question) with the following format: # 1. <AuthorName>. Don't reference any other people or information that is not mentioned above the question. Always share the email address (if available) in this format: [foobar@example.com] (foobar@example.com). Please always link the to relevant commit (e.g. [https://github.com/aymenfurter/x/commit/64e49e60dc41ecd1d6c5a5aebdc5b66e2275c41f](https://github.com/aymenfurter/x/commit/64e49e60dc41ecd1d6c5a5aebdc5b66e2275c41f)). If you mention an author, always the syntax [user](user@example.com) \n Do you understand? "
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "system",
 		Content: prePrompt,
 	})
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "assistant",
-		Content: "Yes, I understand.",
+		Content: "Yes, I understand. I will start a message with 'I would recommend to' ✋",
 	})
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "user",
@@ -86,7 +86,7 @@ func ProcessConversation(openaiClient *OpenAIClient, pineconeClient *PineconeCli
 	})
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "assistant",
-		Content: "Hey there! Take a look at this: [SharePoint Server Farm](https://github.com/MicrosoftDocs/azure-docs/commit/04b6e1dcac6376ddc7bb05f892f4d1b6028e224b) within Azure Documentation 👀. \nI'd recommend reaching out to Sam Alias Jones (sam.alias.jones@microsoft.com) as he's was contributing in this area and Jane Doe Smith (jane.doe.smith@microsoft.com) for her expertise in high availability and fault tolerance. \nI hope you find this information helpful! 			\n\n			Here are the  references 📙\n			1. [SharePoint Server Farm](https://github.com/MicrosoftDocs/azure-docs/commit/04b6e1dcac6376ddc7bb05f892f4d1b6028e224b) by Sam Alias Jones (sam.alias.jones@microsoft.com)			2. [SharePoint Server Farm High Availability Guide](https://github.com/MicrosoftDocs/azure-docs/commit/f7d42ec13b8465dac3b97c547293db7c62a9d91c) by Jane Doe Smith (jane.doe.smith@microsoft.com)			\n\n			Do you have any follow up questions? 🤗",
+		Content: "Hey there! I recommend to take a look at this: [SharePoint Server Farm](https://github.com/MicrosoftDocs/azure-docs/commit/04b6e1dcac6376ddc7bb05f892f4d1b6028e224b) within Azure Documentation 👀. \nI'd recommend reaching out to Sam Alias Jones (sam.alias.jones@microsoft.com) as he's was contributing in this area and Jane Doe Smith (jane.doe.smith@microsoft.com) for her expertise in high availability and fault tolerance. \nI hope you find this information helpful! 			\n\n			Here are the  references 📙\n			1. [SharePoint Server Farm](https://github.com/MicrosoftDocs/azure-docs/commit/04b6e1dcac6376ddc7bb05f892f4d1b6028e224b) by Sam Alias Jones (sam.alias.jones@microsoft.com)			2. [SharePoint Server Farm High Availability Guide](https://github.com/MicrosoftDocs/azure-docs/commit/f7d42ec13b8465dac3b97c547293db7c62a9d91c) by Jane Doe Smith (jane.doe.smith@microsoft.com)			\n\n			Do you have any follow up questions? 🤗",
 	})
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "user",
@@ -123,7 +123,7 @@ func ProcessConversation(openaiClient *OpenAIClient, pineconeClient *PineconeCli
 
 	messages = append(messages, openai.ChatCompletionMessage{
 		Role:    "user",
-		Content: "\n\n-----BEGIN YOUR KNOWLEDGE-----n\n" + pineconeResult + "\n\n-----END YOUR KNOWLEDGE-----n\n" + userMessage,
+		Content: "\n\n-----BEGIN YOUR PERSONAL BOT MEMORY -----n\n" + pineconeResult + "\n\n-----END YOUR PERSONAL BOT MEMORY -----n\n" + userMessage,
 	})
 	fmt.Println("Messages: ", messages)
 

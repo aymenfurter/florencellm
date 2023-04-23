@@ -56,7 +56,7 @@ func (client *PineconeClient) QueryPinecone(query []float32) (string, error) {
 
 	requestBody, err := json.Marshal(map[string]interface{}{
 		"vector":          query,
-		"top_k":           15,
+		"top_k":           10,
 		"includeMetadata": true,
 	})
 	if err != nil {
@@ -116,14 +116,14 @@ func (client *PineconeClient) QueryPinecone(query []float32) (string, error) {
 
 		if validUser {
 			output := fmt.Sprintf("\n\n# %d. %s\n", i+1, text)
-			if len(output) > 1000 {
-				output = output[:1000]
+			if len(output) > 1100 {
+				output = output[:1100]
 			}
 
 			matchOutput += output + "\n\n"
 		}
 
-		if len(matchOutput) > 3500 {
+		if len(matchOutput) > 4500 {
 			break
 		}
 	}

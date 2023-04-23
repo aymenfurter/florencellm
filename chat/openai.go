@@ -31,8 +31,11 @@ func (c *OpenAIClient) CreateChatCompletion(messages []openai.ChatCompletionMess
 	resp, err := c.Client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model:    openai.GPT3Dot5Turbo,
-			Messages: messages,
+			Model:       openai.GPT3Dot5Turbo,
+			Messages:    messages,
+			MaxTokens:   1024,
+			Temperature: 0.3,
+			N:           1,
 		},
 	)
 	if err != nil {
