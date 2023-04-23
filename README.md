@@ -20,7 +20,7 @@ During testing, Microsoft docs were indexed, and the chatbot's performance was e
 
 ## Contributions
 
-We welcome any pull requests! Feel free to test FlorenceLLM with your own git repositories. I hope you enjoy using it! 🤗
+Pull requests and feedback is welcome! Feel free to test FlorenceLLM with your own git repositories. I hope you enjoy using it! 🤗
 
 ## Quick Links
 
