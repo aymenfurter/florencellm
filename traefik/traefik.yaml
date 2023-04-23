@@ -6,3 +6,8 @@ providers:
     directory: "/etc/traefik/dynamic"
 log:
   level: DEBUG
+http:
+  middlewares:
+    traefik-forward-auth:
+      forwardAuth:
+        address: "https://example.com/auth"
