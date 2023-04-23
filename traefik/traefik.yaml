@@ -11,3 +11,4 @@ http:
     traefik-forward-auth:
       forwardAuth:
         address: "https://example.com/auth"
+        authResponseHeaders: "X-Forwarded-User"
