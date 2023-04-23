@@ -71,7 +71,7 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --environment ${{ env.ENV_NAME }} \
             --name "auth" \
-            --image thomseddon/traefik-forward-auth:2 \
+            --image thomseddon/traefik-forward-auth:2.2 \
             --ingress external \
             --secrets githubclientid="${{ secrets.GH_CLIENT_ID }}" \
               githubclientsecret="${{ secrets.GH_CLIENT_SECRET }}" \
