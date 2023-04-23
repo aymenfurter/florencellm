@@ -63,7 +63,7 @@ jobs:
             --environment ${{ env.ENV_NAME }} \
             --name "traefik" \
             --ingress external \
-            --image ghcr.io/aymenfurter/florance/florance-traefik:53e30fa \
+            --image ghcr.io/aymenfurter/florance/florance-traefik:bb6b396 \
             --target-port 80            
       - name: Deploy traefik-forward-auth
         run: |
