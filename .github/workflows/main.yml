@@ -49,7 +49,6 @@ jobs:
             QUESTION_1=${{ secrets.QUESTION_1 }}
             QUESTION_2=${{ secrets.QUESTION_2 }}
             QUESTION_3=${{ secrets.QUESTION_3 }}
-            QUESTION_4=${{ secrets.QUESTION_4 }}
             TARGET_URL=${{ secrets.TARGET_URL }}
   set-env:
     name: Set Environment Variables
