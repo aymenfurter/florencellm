@@ -18,8 +18,7 @@ RUN echo "export const environment = {" > ./src/environments/environment.ts && \
     echo "  sampleQueries: [" >> ./src/environments/environment.ts && \
     echo "    \"$QUESTION_1\"," >> ./src/environments/environment.ts && \
     echo "    \"$QUESTION_2\"," >> ./src/environments/environment.ts && \
-    echo "    \"$QUESTION_3\"," >> ./src/environments/environment.ts && \
-    echo "    \"$QUESTION_4\"" >> ./src/environments/environment.ts && \
+    echo "    \"$QUESTION_3\"" >> ./src/environments/environment.ts && \
     echo "  ]," >> ./src/environments/environment.ts && \
     echo "  targetUrl: \"$TARGET_URL\"" >> ./src/environments/environment.ts && \
     echo "};" >> ./src/environments/environment.ts
