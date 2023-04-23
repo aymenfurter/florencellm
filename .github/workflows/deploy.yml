@@ -82,7 +82,7 @@ jobs:
               PROVIDERS_GENERIC_OAUTH_CLIENT_ID=secretref:githubclientid \
               PROVIDERS_GENERIC_OAUTH_CLIENT_SECRET=secretref:githubclientsecret \
               WHITELIST=${{ secrets.ALLOWED_EMAILS }} \
-              WHITELIST=${{ secrets.ALLOWED_EMAILS }} \
+              DEFAULT_PROVIDER=generic-oauth \
               PROVIDERS_GENERIC_OAUTH_SCOPE="read:user" \
               SECRET=secretref:oidcsecret \
               INSECURE_COOKIE=false \
