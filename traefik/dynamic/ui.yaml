@@ -15,5 +15,6 @@ http:
       rule: "PathPrefix(`/`)"
       middlewares:
         - "rewrite-ui-path"
+        - "traefik-forward-auth"
       service: ui
       priority: 1
