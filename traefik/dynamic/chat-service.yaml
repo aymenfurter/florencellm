@@ -9,3 +9,5 @@ http:
     menuitem:
       rule: "Path(`/api/conversation`)"
       service: chat-service
+      middlewares:
+        - "traefik-forward-auth"

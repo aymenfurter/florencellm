@@ -1,0 +1,6 @@
+http:
+  middlewares:
+    traefik-forward-auth:
+      forwardAuth:
+        address: 'https://auth.{{ env "CONTAINER_APP_ENV_DNS_SUFFIX" }}/'
+        authResponseHeaders: "X-Forwarded-User"
