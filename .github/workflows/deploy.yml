@@ -62,8 +62,6 @@ jobs:
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --environment ${{ env.ENV_NAME }} \
             --name "traefik" \
-            --labels traefik.http.middlewares.traefik-forward-auth.forwardauth.address=${{ env.AUTH_URL }} \
-              traefik.http.middlewares.traefik-forward-auth.forwardauth.authResponseHeaders=X-Forwarded-User \
             --ingress external \
             --image ghcr.io/aymenfurter/florance/florance-traefik:53e30fa \
             --target-port 80            
@@ -72,12 +70,12 @@ jobs:
           az containerapp create \
             --resource-group ${{ env.RESOURCE_GROUP }} \
             --environment ${{ env.ENV_NAME }} \
-            --name "traefik-forward-auth" \
+            --name "auth" \
             --image thomseddon/traefik-forward-auth:2 \
-            --ingress internal \
+            --ingress external \
             --secrets githubclientid="${{ secrets.GH_CLIENT_ID }}" \
-            --secrets githubclientsecret="${{ secrets.GH_CLIENT_SECRET }}" \
-            --secrets oidcsecret="${{ secrets.OIDC_TOKEN }}" \
+              githubclientsecret="${{ secrets.GH_CLIENT_SECRET }}" \
+              oidcsecret="${{ secrets.OIDC_TOKEN }}" \
             --env-vars PROVIDERS_GENERIC_OAUTH_AUTH_URL=https://github.com/login/oauth/authorize \
               PROVIDERS_GENERIC_OAUTH_TOKEN_URL=https://github.com/login/oauth/access_token \
               PROVIDERS_GENERIC_OAUTH_USER_URL=https://api.github.com/user \
